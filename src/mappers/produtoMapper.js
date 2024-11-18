@@ -1,0 +1,71 @@
+//aqui poderia importar o types se estiver usando typeScript para mappers
+//payload poderia ser do type importado
+//Exemplo    produto : TProduto ;
+
+import { lib } from "../utils/lib.js";
+
+export class ProdutoMapper {
+  //Explicacao static ( nao preciso de instanciar a classe )
+  static toFirebird(payload) {
+    return {
+      id: payload?.id,
+      gtin: payload?.gtin?.substring(0, 14),
+      descricao: payload?.nome?.substring(0, 80),
+      aplicacao: "",
+      descricao_full: "",
+      complemento: "",
+      tipoproduto: 0,
+      linha: 0,
+      categoria: 0,
+      marca: 0,
+      cor: 0,
+      sexo: "",
+      tamanho: "",
+      estacao: "",
+      faixaetaria: "",
+      unidade: payload?.unidade?.substring(0, 3),
+      referencia: payload?.codigo?.substring(0, 15),
+      fornecedor: 0,
+      id_grupo_tributario: 0,
+      base_calculo_reduzida: 0,
+      imposto_st_uf: 0,
+      tipo_item_sped: "00",
+      cst_icms_a: "",
+      ncm: payload?.ncm ? lib.onlyNumber(payload?.ncm) : "",
+      ex_ipi: "",
+      codigo_lst: "",
+      classe_abc: "",
+      iat: "",
+      ippt: "",
+      dtcadastro: new Date(),
+      ult_compra: null,
+      observacao: payload?.id,
+      imprimir: "S",
+      excluido: 0,
+      ativo: "S",
+      usuario_ins: "",
+      usuario_atu: "",
+      empresa: 0,
+      ref_fornecedor: "",
+      ponto: 0,
+      cobrar: "",
+      mostruario: 0,
+      codigo_balanca: 0,
+      id_equivalente: 0,
+      ind_ordem: 0,
+      publicidade: "",
+      web: "",
+      cest: payload?.cest ? lib.onlyNumber(payload?.cest) : "",
+      cest_tag: 0,
+      variacao: 0,
+      composto: 0,
+      cbenef: "",
+      sob_encomenda: payload?.sob_encomenda ? payload?.sob_encomenda : "N",
+      dias_preparacao: 0,
+      controla_estoque: "S",
+      garantia: 0,
+      dtatualizado: new Date(),
+      ultatualizacao: new Date(),
+    };
+  }
+}
