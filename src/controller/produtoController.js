@@ -5,6 +5,7 @@ import { ProdutoMapper } from "../mappers/produtoMapper.js";
 import { serviceRepository } from "../repository/serviceRepository.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { productController } from "../controller/productController.js";
+import { json } from "express";
 
 const MAX_UPDATE_RECORDS = 500;
 const produto = new ProdutoRepository(fb5);
@@ -38,29 +39,34 @@ const getAllProdutosSQL = async () => {
 
 const setData = async (id_tenant) => {
   let params = { id_tenant };
-  await productController.productDetaildeleteMany({
-    id_tenant,
-    situacao: "E",
-  });
+
   let items = await productController.getAllProduct(params);
   let result = await getAllProdutosSQL();
   if (!result) result = [];
   let allProd = [];
   let payload;
-  for (r of result) allProd.push(String(r.id));
+  for (let r of result) allProd.push(String(r.id));
 
   for (let item of items) {
     if (allProd.includes(String(item?.id))) continue;
-    if (!item?.codigo) {
+
+    if (item?.id) {
       payload = await productController.getProductDetailById(item?.id);
-    } else {
+    }
+
+    if (!payload) {
       payload = await productController.getProductDetailBySku(
         item?.id_tenant,
         item?.codigo
       );
     }
-    if (!payload) continue;
-    console.log("Cod do produto " + item.codigo + " item Id : " + item.id);
+    if (!payload) {
+      console.log("Produto não encontrado " + item.codigo);
+      continue;
+    }
+    console.log(
+      "Atualizando produto  " + item.codigo + " item Id : " + item.id
+    );
     try {
       await cadastrarGruposSubgrupos(payload);
     } catch (error) {}
@@ -200,8 +206,8 @@ async function addProdutoPreco(payload) {
   let body = {
     id: payload?.id,
     empresa: payload.id_tenant,
-    custo: payload?.preco_custo,
-    venda: payload?.preco,
+    custo: Number(payload?.preco_custo),
+    venda: Number(payload?.preco),
     m_venda: lib.obter_percentual(payload?.preco, payload?.preco_custo),
     m_atacado: 0,
     desde: new Date(),

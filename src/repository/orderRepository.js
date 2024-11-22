@@ -190,7 +190,7 @@ async function receberPedidos() {
 
     let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 11 });
     let info = new TinyInfo({ instance: tiny });
-    let dataInicial = await info.getDataInicialPedidos();
+    let dataInicial = await info.getDataInicial();
     let page_count = await info.getPaginasPedidos(dataInicial);
 
     let response = null;

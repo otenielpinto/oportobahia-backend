@@ -79,11 +79,7 @@ export class TinyInfo {
   }
 
   async getPaginasProdutos() {
-    let page = 1;
-    let data = [
-      { key: "pesquisa", value: "" },
-      { key: "pagina", value: page },
-    ];
+    let data = [{ key: "pesquisa", value: "" }];
     let response = await this.instance.post("produtos.pesquisa.php", data);
     let {
       retorno: { numero_paginas: page_count },
@@ -105,7 +101,38 @@ export class TinyInfo {
     return page_count;
   }
 
-  async getDataInicialPedidos() {
+  async getPaginasListaPrecos() {
+    let data = [];
+    let response = await this.instance.post("listas.precos.pesquisa.php", data);
+    let {
+      retorno: { numero_paginas: page_count },
+    } = response?.data;
+    return page_count;
+  }
+
+  async getPaginasListaPrecosExcecoes(idListaPreco) {
+    let data = [{ key: "idListaPreco", value: idListaPreco }];
+    let response = await this.instance.post("listas.precos.excecoes.php", data);
+    let {
+      retorno: { numero_paginas: page_count },
+    } = response?.data;
+    return page_count;
+  }
+
+  async getPaginasNotaFiscal(tipoNota, dataInicial, dataFinal) {
+    let data = [
+      { key: "tipoNota", value: tipoNota },
+      { key: "dataInicial", value: dataInicial },
+      { key: "dataFinal", value: dataFinal },
+    ];
+    let response = await this.instance.post("notas.fiscais.pesquisa.php", data);
+    let {
+      retorno: { numero_paginas: page_count },
+    } = response?.data;
+    return page_count;
+  }
+
+  async getDataInicial() {
     let pedido_numero_dias_processar =
       Number(process.env.PEDIDO_NUMERO_DIAS_PROCESSAR) || 30;
 
@@ -114,6 +141,11 @@ export class TinyInfo {
     );
 
     return String(dataInicial);
+  }
+
+  async getDataFinal() {
+    let dataFinal = lib.formatDateBr(lib.addDays(new Date(), 0));
+    return String(dataFinal);
   }
 }
 

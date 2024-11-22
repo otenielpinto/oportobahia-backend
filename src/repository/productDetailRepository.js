@@ -1,8 +1,8 @@
-//Classe tem letras maiuculas
+//Classe tem letras maiuculoas
 
-const collection = "tmp_modelo";
+const collection = "product_detail";
 
-export class ModeloRepository {
+export class ProductDetailRepository {
   constructor(db) {
     this.db = db;
   }
@@ -13,14 +13,17 @@ export class ModeloRepository {
   }
 
   async update(id, payload) {
+    payload.updated_at = new Date();
     const result = await this.db
       .collection(collection)
-      .updateOne({ id: id }, { $set: payload }, { upsert: true });
+      .updateOne({ id: String(id) }, { $set: payload }, { upsert: true });
     return result.modifiedCount > 0;
   }
 
   async delete(id) {
-    const result = await this.db.collection(collection).deleteOne({ id: id });
+    const result = await this.db
+      .collection(collection)
+      .deleteOne({ id: String(id) });
     return result.deletedCount > 0;
   }
 
@@ -29,7 +32,7 @@ export class ModeloRepository {
   }
 
   async findById(id) {
-    return await this.db.collection(collection).findOne({ id: id });
+    return await this.db.collection(collection).findOne({ id: String(id) });
   }
 
   async insertMany(items) {

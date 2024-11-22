@@ -11,6 +11,11 @@ import { empresaController } from "./controller/empresaController.js";
 import { estoqueController } from "./controller/estoqueController.js";
 import { serviceRepository } from "./repository/serviceRepository.js";
 import { vendaController } from "./controller/vendaController.js";
+import { listaPrecoController } from "./controller/listaPrecoController.js";
+import { listaPrecoExcecoesController } from "./controller/listaPrecoExcecoesController.js";
+import { nfeController } from "./controller/nfeController.js";
+import { cfopController } from "./controller/cfopController.js";
+import { tributacaoController } from "./controller/tributacaoController.js";
 
 global.processandoNow = 0;
 
@@ -18,17 +23,22 @@ async function task() {
   global.processandoNow = 1;
   await productController.init(); //mongodb
   await produtoController.init(); //firebird
-  await orderRepository.init();
+  await listaPrecoController.init();
+  await listaPrecoExcecoesController.init();
+  await nfeController.init();
+  //await orderRepository.init();
 
   //executar 1 x por dia
   let key = "Tarefa diaria";
   let tenant_id = 1;
   if ((await serviceRepository.hasExec(tenant_id, key)) == 0) {
     await serviceRepository.updateService(tenant_id, key);
+    await cfopController.init();
+    await tributacaoController.init();
     await empresaController.init();
     await estoqueController.init();
   }
-  await vendaController.init();
+  //await vendaController.init();
 
   global.processandoNow = 0;
   console.log(" Job Finished [task] " + lib.currentDateTimeStr());
@@ -39,7 +49,7 @@ async function init() {
   //await estoqueController.init();
   //await vendaController.init();
   //await orderRepository.init();
-
+  //await task();
   //return;
 
   try {

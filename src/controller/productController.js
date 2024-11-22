@@ -1,12 +1,13 @@
 import { TMongo } from "../infra/mongoClient.js";
 import { lib } from "../utils/lib.js";
-
 import { ProductRepository } from "../repository/productRepository.js";
 import { TProductTypes } from "../types/productTypes.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { tinyRepository } from "../repository/tinyRepository.js";
 import { serviceRepository } from "../repository/serviceRepository.js";
 import { Tiny, TinyInfo } from "../services/tinyService.js";
+import { ProductDetailRepository } from "../repository/productDetailRepository.js";
+import { logRepository } from "../repository/logRepository.js";
 
 async function init() {
   await receberProdutos();
@@ -19,6 +20,24 @@ async function init() {
     items.push(id_tenant);
     await updateAllProductsDetails(id_tenant); //controle de processamento dentro da funcionalidade
   }
+}
+
+async function produtoObter(id_tenant, id) {
+  let tenant = await tenantRepository.getTenantById(id_tenant);
+  let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
+  let result = null;
+  let response = null;
+  for (let t = 0; t < 12; t++) {
+    result = await tiny.post("produto.obter.php", [{ key: "id", value: id }]);
+    response = await tiny.tratarRetorno(result, "produto");
+    if (tiny.status() == "OK") break;
+  }
+
+  if (response == null) {
+    console.log("Produto não encontrado na API Tiny");
+  }
+
+  return response;
 }
 
 async function getProductBySku(id_tenant, sku) {
@@ -95,10 +114,12 @@ async function receberProdutos() {
 }
 
 async function updateProductDetailOne(id_tenant, id) {
-  let produto = await tinyRepository.parseToProduto(
-    await tinyRepository.produtoObter(id_tenant, id)
-  );
-  return await saveProdutoDetailMongo(id_tenant, produto);
+  let produto = await produtoObter(id_tenant, id);
+  if (!produto) return null;
+  let productDetail = new ProductDetailRepository(await TMongo.connect());
+
+  produto.id_tenant = id_tenant;
+  return await productDetail.update(produto.id, response);
 }
 
 async function getAllProduct(params = {}) {
@@ -127,52 +148,31 @@ async function updateAllProductsDetails(id_tenant) {
   let key = "Atualiza Cadastro Produto " + id_tenant;
   if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
   await serviceRepository.updateService(id_tenant, key);
+
   let params = { id_tenant, status: TProductTypes.STATUS.PENDENTE };
   let products = await getAllProduct(params);
-  let sendStatus = {
-    id_tenant,
-    status: TProductTypes.STATUS.PROCESSADO,
-    id: 0,
-  };
+
+  let response = null;
+  const c = await TMongo.connect();
+
+  const productDetail = new ProductDetailRepository(c);
+  const productRepository = new ProductRepository(c);
+
   for (let product of products) {
-    await lib.sleep(200);
-    sendStatus.id = product.id;
-    await updateProductDetailOne(id_tenant, product?.id);
-    await setStatus(sendStatus);
+    response = await produtoObter(id_tenant, product.id);
+    if (!response) continue;
+
+    response.id_tenant = id_tenant;
+    await productDetail.update(product.id, response);
+    await productRepository.update(product.id, {
+      status: TProductTypes.STATUS.PROCESSADO,
+    });
   }
+
   return;
 }
 
 //--------------CRIA CLASSE PRODUCT_DETAIL-------------------------------------
-
-//PRODUCT_DETAIL Precisa vir o produto limpo para como é gravado no mongodb .
-async function saveProdutoDetailMongo(id_tenant, item) {
-  if (!item) return null;
-  let id = String(item?.id);
-  let body = {
-    id_tenant: Number(id_tenant),
-    ...item,
-    updated_at: new Date(),
-  };
-
-  const client = await TMongo.connect();
-  client
-    .collection("product_detail")
-    .updateOne(
-      { id: { $eq: id }, id_tenant: { $eq: Number(id_tenant) } },
-      { $set: body },
-      { upsert: true }
-    );
-
-  return true;
-}
-async function productDetaildeleteMany(criterio = {}) {
-  const client = await TMongo.connect();
-  const response = await client
-    .collection("product_detail")
-    .deleteMany(criterio);
-  return response;
-}
 
 async function getProductDetailById(id) {
   const client = await TMongo.connect();
@@ -198,6 +198,8 @@ export const productController = {
 
   receberProdutos,
 
+  produtoObter,
+
   getProductById,
   getProductBySku,
   getProductByGtin,
@@ -210,7 +212,4 @@ export const productController = {
   updateAllProductsDetails,
   getProductDetailBySku,
   getProductDetailById,
-  productDetaildeleteMany,
-
-  saveProdutoDetailMongo,
 };

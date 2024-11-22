@@ -77,17 +77,6 @@ async function produtoPesquisaByDataCriacao(id_tenant, dataCriacao) {
   return response;
 }
 
-async function produtoObter(idTenant, id) {
-  const token = await tenantRepository.getTokenByTenantId(idTenant);
-  const data = [
-    { key: "token", value: token },
-    { key: "id", value: id },
-    { key: "formato", value: "json" },
-  ];
-  const response = await apiTiny("produto.obter.php", data, "POST");
-  return response;
-}
-
 //idProduto = id Tiny do Produto
 //tipo = E(Entrada)  S(saida)  B (balanço)
 async function produtoAtualizarEstoque(
@@ -276,7 +265,6 @@ export const tinyRepository = {
   produtoPesquisa,
   produtoPesquisaByDataCriacao,
   produtoPesquisaByAny,
-  produtoObter,
   produtoIncluir,
 
   produtoAtualizarEstoque,

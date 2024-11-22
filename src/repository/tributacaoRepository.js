@@ -1,8 +1,8 @@
 //Classe tem letras maiuculas
 
-const collection = "tmp_modelo";
+const collection = "tmp_tributacao";
 
-export class ModeloRepository {
+export class TributacaoRepository {
   constructor(db) {
     this.db = db;
   }
