@@ -7,11 +7,11 @@ config();
 //https://github.com/asfernandes/node-firebird-drivers/blob/master/packages/node-firebird-driver/src/test/tests.ts
 
 const dboptions = {};
-dboptions.host = process.env.DB_HOST;
-dboptions.port = Number(process.env.DB_PORT) || 3050;
-dboptions.database = process.env.DB_DATABASE;
-dboptions.user = String(process.env.DB_USER);
-dboptions.password = String(process.env.DB_PWD);
+dboptions.host = process.env.FIREBIRD_HOST;
+dboptions.port = Number(process.env.FIREBIRD_PORT) || 3050;
+dboptions.database = process.env.FIREBIRD_DATABASE;
+dboptions.user = String(process.env.FIREBIRD_USER);
+dboptions.password = String(process.env.FIREBIRD_PWD);
 dboptions.lowercase_keys = true; // set to true to lowercase keys
 dboptions.role = null; // default
 dboptions.pageSize = 8192; // default when creating database
