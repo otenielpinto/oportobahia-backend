@@ -20,6 +20,11 @@ import { tributacaoController } from "./controller/tributacaoController.js";
 global.processandoNow = 0;
 
 async function task() {
+  if ((await lib.isManutencao()) == 1) {
+    console.log("Esta em horario de manutenção até ( 20 hrs até 6:00 hrs");
+    return;
+  }
+
   global.processandoNow = 1;
   await productController.init(); //mongodb
   await produtoController.init(); //firebird
@@ -49,8 +54,6 @@ async function init() {
   //await estoqueController.init();
   //await vendaController.init();
   //await orderRepository.init();
-  //await task();
-  //return;
 
   try {
     const time = 13; //tempo em minutos

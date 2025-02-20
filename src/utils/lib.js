@@ -260,6 +260,13 @@ function currentDateTimeStr() {
   return new Date().toLocaleString("pt-BR", { hour12: false });
 }
 
+async function isManutencao() {
+  let hora = new Date().getHours();
+  let res = 0;
+  if (hora >= 20 || hora <= 6) res = 1;
+  return res;
+}
+
 export const lib = {
   objectToLowerCase,
   arrayToString,
@@ -285,4 +292,5 @@ export const lib = {
   formatDateBr,
   dateBrToIso8601,
   formatDate,
+  isManutencao,
 };
