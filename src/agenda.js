@@ -16,6 +16,7 @@ import { listaPrecoExcecoesController } from "./controller/listaPrecoExcecoesCon
 import { nfeController } from "./controller/nfeController.js";
 import { cfopController } from "./controller/cfopController.js";
 import { tributacaoController } from "./controller/tributacaoController.js";
+import { apurarRoyaltiesController } from "./controller/apurarRoyaltiesController.js";
 
 global.processandoNow = 0;
 
@@ -31,7 +32,7 @@ async function task() {
   await listaPrecoController.init();
   await listaPrecoExcecoesController.init();
   await nfeController.init();
-  //await orderRepository.init();
+  await apurarRoyaltiesController.init();
 
   //executar 1 x por dia
   let key = "Tarefa diaria";
@@ -54,9 +55,12 @@ async function init() {
   //await estoqueController.init();
   //await vendaController.init();
   //await orderRepository.init();
+  //await apurarRoyaltiesController.init();
+
+  //return;
 
   try {
-    const time = 13; //tempo em minutos
+    const time = 12; //tempo em minutos
     const job = nodeSchedule.scheduleJob(`*/${time} * * * *`, async () => {
       console.log(" Job start as " + lib.currentDateTimeStr());
       await TMongo.close();
