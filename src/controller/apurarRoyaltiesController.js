@@ -82,7 +82,8 @@ async function processarApuracao(payload) {
 
           // Extrair informações relevantes do item
           let row = {
-            id,
+            id: lib.newUUId(),
+            id_grupo: id,
             data_movto: notaFiscal.data_movto,
             chave_acesso: notaFiscal.chave_acesso,
             tenant_id: notaFiscal.tenant_id,
