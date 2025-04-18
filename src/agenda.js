@@ -55,9 +55,9 @@ async function init() {
   //await estoqueController.init();
   //await vendaController.init();
   //await orderRepository.init();
-  //await apurarRoyaltiesController.init();
-
-  //return;
+  await apurarRoyaltiesController.init();
+  console.log("Tarefa finalizada em " + lib.currentDateTimeStr());
+  return;
 
   try {
     const time = 12; //tempo em minutos

@@ -197,7 +197,7 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate }) {
         $lte: toDate,
       },
     };
-    const data = await clientdb.collection(collection).find(query).toArray();
+    const data = await clientdb.collection("nota_fiscal").find(query).toArray();
 
     return data;
   } catch (error) {
