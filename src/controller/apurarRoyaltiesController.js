@@ -140,6 +140,9 @@ export async function processarApuracaoItem({ item }) {
         item.valorRoyalties / numberOfTracks
       );
 
+      // Corrigir o valor de royalties total
+      item.valorRoyalties = item.valorRoyaltiesPorFaixa * numberOfTracks;
+
       // Processar publishers se existirem
       if (item.catalogo.tracks && Array.isArray(item.catalogo.tracks)) {
         for (const track of item.catalogo.tracks) {
