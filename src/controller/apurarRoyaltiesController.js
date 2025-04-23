@@ -140,8 +140,7 @@ export async function processarApuracaoItem({ item }) {
         item.valorRoyalties / numberOfTracks
       );
 
-      // Corrigir o valor de royalties total
-      item.valorRoyalties = item.valorRoyaltiesPorFaixa * numberOfTracks;
+      let sum_valor_royalties = 0;
 
       // Processar publishers se existirem
       if (item.catalogo.tracks && Array.isArray(item.catalogo.tracks)) {
@@ -154,6 +153,7 @@ export async function processarApuracaoItem({ item }) {
                   publisher.participationPercentage) /
                   100
               );
+              sum_valor_royalties += publisher.valor_royalties;
             }
           }
 
@@ -168,11 +168,16 @@ export async function processarApuracaoItem({ item }) {
                       publisher.participationPercentage) /
                       100
                   );
+                  sum_valor_royalties += publisher.valor_royalties;
                 }
               }
             }
           }
         }
+      }
+      // Atualizar o valor total de royalties
+      if (sum_valor_royalties > 0) {
+        item.valorRoyalties = sum_valor_royalties;
       }
     } else {
       // Produto não está no catálogo, mas ainda assim deve ser processado
