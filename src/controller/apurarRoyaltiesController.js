@@ -155,7 +155,7 @@ export async function processarApuracaoItem({ item }) {
                   publisher.participationPercentage) /
                   100
               );
-              sum_valor_royalties += publisher.valor_royalties;
+              sum_valor_royalties += lib.round(publisher.valor_royalties);
             }
           }
 
@@ -170,7 +170,7 @@ export async function processarApuracaoItem({ item }) {
                       publisher.participationPercentage) /
                       100
                   );
-                  sum_valor_royalties += publisher.valor_royalties;
+                  sum_valor_royalties += lib.round(publisher.valor_royalties);
                 }
               }
             }
@@ -179,7 +179,7 @@ export async function processarApuracaoItem({ item }) {
       }
       // Atualizar o valor total de royalties
       if (sum_valor_royalties > 0) {
-        item.valorRoyalties = sum_valor_royalties;
+        item.valorRoyalties = lib.round(sum_valor_royalties);
       }
     } else {
       // Produto não está no catálogo, mas ainda assim deve ser processado
