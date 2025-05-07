@@ -3,7 +3,6 @@ import { TMongo } from "../infra/mongoClient.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { NfeRepository } from "../repository/nfeRepository.js";
 import { xmlParser } from "../utils/xmlParser.js";
-
 import { lib } from "../utils/lib.js";
 
 async function init() {
@@ -22,6 +21,10 @@ async function importarNotaFiscais(tenant) {
   let tipoNota = "S"; //Saida
   let dataInicial = await info.getDataInicial();
   let dataFinal = await info.getDataFinal();
+  // IMPORTANTE
+  //estou importando apenas as notas fiscais de saida
+  //para calcular a comissao so consideras as notas de venda .
+
   const numero_paginas = await info.getPaginasNotaFiscal(
     tipoNota,
     dataInicial,
@@ -50,9 +53,23 @@ async function importarNotaFiscais(tenant) {
     for (let item of response) {
       let nota_fiscal = item.nota_fiscal;
       let nfe = await nfeRepository.findById(nota_fiscal.id);
+      let situacao = nfe?.descricao_situacao ? nfe?.descricao_situacao : "";
+      nota_fiscal.tipoVenda = "";
 
       if (nfe?.id) {
         console.log(`Nota Fiscal ${nota_fiscal.id} já importada`);
+
+        if (
+          situacao == "Denegada" ||
+          situacao == "Cancelada" ||
+          situacao == "Rejeitada"
+        ) {
+          await nfeRepository.delete(nota_fiscal.id);
+          console.log(
+            `Nota Fiscal ${nota_fiscal.id} excluida do sistema sit:${nfe?.descricao_situacao}`
+          );
+        }
+
         continue;
       }
 
@@ -100,17 +117,51 @@ async function importarXml(tenant) {
         let { infNFe: nfe } = nfeXml?.nfeProc?.NFe;
         if (!Array.isArray(nfe?.det)) nfe.det = [nfe.det];
 
+        row.natOp = nfe?.ide?.natOp;
         row.ICMSTot = nfe?.total?.ICMSTot;
         row.itens = nfe?.det ? nfe.det : [];
         row.xml = xmlOriginal;
         row.sys_xml = 1;
         row.sys_status = 1;
+        row.tipoVenda = await obterTipoVenda(row?.itens);
         await nfeRepository.update(row.id, row);
       });
     } catch (error) {
       console.log(error);
     }
     await lib.sleep(1000 * 1);
+  }
+}
+
+async function obterTipoVenda(items = []) {
+  let result = "D";
+  if (!Array.isArray(items)) return result;
+  for (let item of items) {
+    let cfop = item?.prod?.CFOP;
+    if (lib.isCFOPVenda(cfop)) {
+      return "V";
+    }
+  }
+  return result;
+}
+
+async function ajustarNotaFiscal(tenant) {
+  let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
+  const nfeRepository = new NfeRepository(await TMongo.connect());
+  let rows = await nfeRepository.findAll({ tenant_id: tenant.id });
+
+  for (let row of rows) {
+    console.log(
+      `Retificando nota fiscal ${row.id} de ${row.numero} - ${row.data_emissao}`
+    );
+
+    row.tipoVenda = await obterTipoVenda(row?.itens);
+
+    await nfeRepository.update(row.id, {
+      tipoVenda: row.tipoVenda,
+      sys_xml: row.sys_xml,
+      sys_status: row.sys_status,
+    });
   }
 }
 

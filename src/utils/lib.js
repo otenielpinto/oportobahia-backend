@@ -267,7 +267,35 @@ async function isManutencao() {
   return res;
 }
 
+function isCFOPVenda(cfop) {
+  let cfops = [
+    "5102",
+    "5104",
+    "5106",
+    "5108",
+    "5110",
+    "5403",
+    "5405",
+    "5403",
+    "5405",
+    "6102",
+    "6403",
+    "6404",
+    "6106",
+    "6108",
+    "6104",
+    "6110",
+  ];
+
+  let result = false;
+  if (cfops.includes(cfop)) {
+    result = true;
+  }
+  return result;
+}
+
 export const lib = {
+  isCFOPVenda,
   objectToLowerCase,
   arrayToString,
   round,

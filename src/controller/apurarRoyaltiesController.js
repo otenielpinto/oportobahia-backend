@@ -36,9 +36,11 @@ async function processarFila() {
 
 async function processarApuracao(payload) {
   const { id, data_inicial: fromDate, data_final: toDate } = payload;
+  //retorna nota_fiscal do tipo venda = "V"
   const notasFiscais = await getNotasFiscaisPorPeriodo({
     fromDate,
     toDate,
+    tipoVenda: "V",
   });
 
   if (notasFiscais.length === 0) {
@@ -196,7 +198,7 @@ export async function processarApuracaoItem({ item }) {
 }
 
 //Obs : Decidi criar a function aqui e estou consciente
-async function getNotasFiscaisPorPeriodo({ fromDate, toDate }) {
+async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   try {
     const clientdb = await TMongo.connect();
     const query = {
@@ -204,6 +206,7 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate }) {
         $gte: fromDate,
         $lte: toDate,
       },
+      tipoVenda: tipoVenda,
     };
     const data = await clientdb.collection("nota_fiscal").find(query).toArray();
 

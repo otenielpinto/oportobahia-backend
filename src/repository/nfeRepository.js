@@ -17,7 +17,9 @@ export class NfeRepository {
     payload.updated_at = new Date();
     if (!payload.sys_status) payload.sys_status = 1;
     if (!payload.sys_xml) payload.sys_xml = 0;
-    payload.data_movto = lib.dateBrToIso8601(payload.data_emissao);
+    if (payload.data_emissao) {
+      payload.data_movto = lib.dateBrToIso8601(payload.data_emissao);
+    }
 
     const result = await this.db
       .collection(collection)
