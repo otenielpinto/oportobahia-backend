@@ -23,13 +23,14 @@ async function processarFila() {
   });
 
   for (let row of rows) {
-    console.log(row);
     if (row?.status != "aguardando") continue;
-    await processarApuracao(row);
+    let messages = await processarApuracao(row);
+    let status = messages.length > 0 ? "erro" : "aberto";
 
     await apuracaoCurrentRepository.update(row.id, {
-      status: "aberto",
+      status: status,
       data_processamento: new Date(),
+      messages: messages,
     });
   }
 }
@@ -54,6 +55,7 @@ async function processarApuracao(payload) {
 
   // Obter a taxa de copyright
   const { tx_copyright } = await getTaxaCopyright();
+  const messages = [];
 
   for (const notaFiscal of notasFiscais) {
     if (notaFiscal.itens && Array.isArray(notaFiscal.itens)) {
@@ -66,8 +68,38 @@ async function processarApuracao(payload) {
 
           //Obrigatório estar no catalogo
           if (!catalogo) {
+            messages.push(
+              `Produto não encontrado no catálogo para o GTIN: ${barcode}`
+            );
             continue;
           }
+
+          //preciso identificar o id do produto
+          let produto = await clientdb
+            .collection("product")
+            .findOne({ gtin: barcode });
+
+          if (!produto) {
+            messages.push(`Produto não encontrado para o GTIN: ${barcode}`);
+            continue;
+          }
+
+          //agora preciso achar o preco da tabela
+          let listaPreco = await clientdb
+            .collection("tmp_lista_preco_excecoes")
+            .findOne({ id_produto: Number(produto.id) });
+
+          if (!listaPreco) {
+            messages.push(
+              `Tabela de preço não encontrada para o id: ${produto.id}`
+            );
+            continue;
+          }
+
+          let tabela_descricao = listaPreco?.descricao;
+          let tabela_codigo = listaPreco?.id_lista_preco;
+          let tabela_preco = parseFloat(listaPreco.preco);
+
           let tx_copyright_item = tx_copyright;
           let numberOfTracks = catalogo.numberOfTracks || 0;
           let trackLimit = catalogo.trackLimit || 0;
@@ -81,6 +113,8 @@ async function processarApuracao(payload) {
           }
 
           tx_copyright_item = tx_copyright_item + extra_copyright;
+          let quantidade = parseFloat(item.prod.qCom);
+          let valor_total = lib.round(quantidade * tabela_preco);
 
           // Extrair informações relevantes do item
           let row = {
@@ -95,13 +129,20 @@ async function processarApuracao(payload) {
             produto: item.prod.cProd,
             barcode: item.prod.cEAN,
             descricao: item.prod.xProd,
-            quantidade: parseFloat(item.prod.qCom),
-            valor_unitario: parseFloat(item.prod.vUnCom),
-            valor_total: parseFloat(item.prod.vProd),
-            valor_desconto: parseFloat(item.prod.vDesc || 0),
-            valor_liquido: lib.round(
-              parseFloat(item.prod.vProd) - parseFloat(item.prod.vDesc || 0)
+            quantidade: quantidade,
+            tabela_descricao: tabela_descricao,
+            tabela_preco: tabela_preco,
+            tabela_codigo: tabela_codigo,
+            valor_nf_total: lib.round(item.prod.vProd),
+            valor_nf_unitario: parseFloat(item.prod.vUnCom),
+            valor_nf_desconto: parseFloat(item.prod.vDesc),
+            valor_nf_liquido: lib.round(
+              parseFloat(item.prod.vProd) - parseFloat(item.prod.vDesc)
             ),
+            valor_unitario: tabela_preco,
+            valor_total: valor_total,
+            valor_desconto: 0,
+            valor_liquido: valor_total,
             tx_copyright: tx_copyright_item,
             catalogo: catalogo, // Pode ser null se não estiver no catálogo
           };
@@ -123,6 +164,9 @@ async function processarApuracao(payload) {
   if (itensParaInserir.length > 0) {
     await clientdb.collection(collectionPeriodo).insertMany(itensParaInserir);
   }
+
+  //retornar mensagens de erro
+  return messages;
 }
 
 export async function processarApuracaoItem({ item }) {

@@ -39,7 +39,11 @@ async function importarListaPreco(tenant) {
     if (Array.isArray(response)) {
       for (let item of response) {
         console.log(`Importando lista de preços ${item.registro.id}`);
-        let obj = { ...item.registro, tenant_id: tenant.id };
+        let obj = {
+          ...item.registro,
+          tenant_id: tenant.id,
+          updateAt: new Date(),
+        };
         await listaRepository.update(obj.id, obj);
         await lib.sleep(500);
       }

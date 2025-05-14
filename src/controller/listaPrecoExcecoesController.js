@@ -55,7 +55,13 @@ async function importarListaPreco(tenant) {
         console.log(
           `Importando lista [${item.registro.id_lista_preco}] de preços excecoes ${item.registro.id}`
         );
-        let obj = { ...item.registro, tenant_id: tenant.id };
+        let obj = {
+          ...item.registro,
+          acrescimo_desconto: lista.acrescimo_desconto,
+          descricao: lista.descricao,
+          tenant_id: tenant.id,
+          updateAt: new Date(),
+        };
         await listaPrecoExcecoesRepository.update(obj.id, obj);
         await lib.sleep(500);
       }

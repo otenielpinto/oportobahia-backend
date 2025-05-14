@@ -57,6 +57,8 @@ async function init() {
   //await orderRepository.init();
   //await apurarRoyaltiesController.init();
   //await nfeController.init();
+  //await listaPrecoController.init();
+  //await listaPrecoExcecoesController.init();
   //console.log("Tarefa finalizada em " + lib.currentDateTimeStr());
   //return;
 
