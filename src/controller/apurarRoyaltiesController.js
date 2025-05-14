@@ -68,7 +68,7 @@ async function processarApuracao(payload) {
 
           //Obrigatório estar no catalogo
           if (!catalogo) {
-            messages.push(
+            console.log(
               `Produto não encontrado no catálogo para o GTIN: ${barcode}`
             );
             continue;
@@ -91,7 +91,7 @@ async function processarApuracao(payload) {
 
           if (!listaPreco) {
             messages.push(
-              `Tabela de preço não encontrada para o id: ${produto.id}`
+              `Tabela de preço não encontrada para o id: ${produto.id} - GTIN: ${barcode}`
             );
             continue;
           }
