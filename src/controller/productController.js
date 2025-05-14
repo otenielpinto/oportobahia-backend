@@ -105,6 +105,10 @@ async function receberProdutos() {
         item.produto.created_at = new Date();
         item.produto.updated_at = null;
         item.produto.sku = item.produto.codigo; //remove esse campo com o tempo 09/08/2024
+
+        item.produto.gtin = item.produto.gtin
+          ? item.produto.gtin.replace(/\s+/g, "")
+          : item.produto.gtin;
         items.push(item.produto);
       }
       await productRepository.insertMany(items);

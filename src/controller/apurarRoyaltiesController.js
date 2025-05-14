@@ -25,17 +25,18 @@ async function processarFila() {
   for (let row of rows) {
     if (row?.status != "aguardando") continue;
     let messages = await processarApuracao(row);
-    let status = messages.length > 0 ? "erro" : "aberto";
 
     await apuracaoCurrentRepository.update(row.id, {
-      status: status,
+      status: "aberto",
       data_processamento: new Date(),
+      has_error: messages.length > 0,
       messages: messages,
     });
   }
 }
 
 async function processarApuracao(payload) {
+  const messages = [];
   const { id, data_inicial: fromDate, data_final: toDate } = payload;
   //retorna nota_fiscal do tipo venda = "V"
   const notasFiscais = await getNotasFiscaisPorPeriodo({
@@ -45,8 +46,8 @@ async function processarApuracao(payload) {
   });
 
   if (notasFiscais.length === 0) {
-    console.log("Nenhuma nota fiscal encontrada para o período.");
-    return;
+    messages.push("Nenhuma nota fiscal encontrada para o período.");
+    return messages;
   }
   const clientdb = await TMongo.connect();
 
@@ -55,7 +56,6 @@ async function processarApuracao(payload) {
 
   // Obter a taxa de copyright
   const { tx_copyright } = await getTaxaCopyright();
-  const messages = [];
 
   for (const notaFiscal of notasFiscais) {
     if (notaFiscal.itens && Array.isArray(notaFiscal.itens)) {
