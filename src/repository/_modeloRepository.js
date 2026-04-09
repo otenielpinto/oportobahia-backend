@@ -1,51 +1,24 @@
-//Classe tem letras maiuculas
+//Classe tem letras maiuculoas
 
-const collection = "tmp_modelo";
+import { Repository } from "./baseRepository.js";
 
-export class ModeloRepository {
-  constructor(db) {
-    this.db = db;
+class ModeloRepository extends Repository {
+  constructor(id_tenant = null) {
+    super("tmp_modelo", id_tenant);
   }
 
-  async create(payload) {
-    const result = await this.db.collection(collection).insertOne(payload);
-    return result.insertedId;
+  // Métodos personalizados específicos para Modelo podem ser adicionados aqui
+  // Os métodos básicos (create, update, delete, findAll, findById, etc.)
+  // já estão disponíveis através da herança da TRepository
+
+  async findByNome(nome) {
+    return await this.findOne({ nome: nome });
   }
 
-  async update(id, payload) {
-    const result = await this.db
-      .collection(collection)
-      .updateOne({ id: id }, { $set: payload }, { upsert: true });
-    return result.modifiedCount > 0;
-  }
-
-  async delete(id) {
-    const result = await this.db.collection(collection).deleteOne({ id: id });
-    return result.deletedCount > 0;
-  }
-
-  async findAll(criterio = {}) {
-    return await this.db.collection(collection).find(criterio).toArray();
-  }
-
-  async findById(id) {
-    return await this.db.collection(collection).findOne({ id: id });
-  }
-
-  async insertMany(items) {
-    if (!Array.isArray(items)) return null;
-    try {
-      return await this.db.collection(collection).insertMany(items);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  async deleteMany(criterio = {}) {
-    try {
-      return await this.db.collection(collection).deleteMany(criterio);
-    } catch (e) {
-      console.log(e);
-    }
+  async findActiveModelos() {
+    return await this.findAll({ ativo: true });
   }
 }
+
+export { ModeloRepository };
+    

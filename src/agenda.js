@@ -2,7 +2,6 @@ import { TMongo } from "./infra/mongoClient.js";
 import { lib } from "./utils/lib.js";
 import nodeSchedule from "node-schedule";
 
-import { orderRepository } from "./repository/orderRepository.js";
 import { stockRepository } from "./repository/stockRepository.js";
 import { notaFiscalRepository } from "./repository/notafiscalRepository.js";
 import { produtoController } from "./controller/produtoController.js";
@@ -10,7 +9,6 @@ import { productController } from "./controller/productController.js";
 import { empresaController } from "./controller/empresaController.js";
 import { estoqueController } from "./controller/estoqueController.js";
 import { serviceRepository } from "./repository/serviceRepository.js";
-import { vendaController } from "./controller/vendaController.js";
 import { listaPrecoController } from "./controller/listaPrecoController.js";
 import { listaPrecoExcecoesController } from "./controller/listaPrecoExcecoesController.js";
 import { nfeController } from "./controller/nfeController.js";
@@ -54,7 +52,7 @@ async function init() {
   //await productController.init(); //mongodb
   //await estoqueController.init();
   //await vendaController.init();
-  //await orderRepository.init();
+
   //await apurarRoyaltiesController.init();
   //await nfeController.init();
   //await listaPrecoController.init();
@@ -70,7 +68,7 @@ async function init() {
 
       if (global.processandoNow == 1) {
         console.log(
-          " Job can't started [processing] " + lib.currentDateTimeStr()
+          " Job can't started [processing] " + lib.currentDateTimeStr(),
         );
       } else {
         try {
