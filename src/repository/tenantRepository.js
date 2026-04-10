@@ -2,7 +2,14 @@ import { TMongo } from "../infra/mongoClient.js";
 
 async function getAllTenantSystem() {
   const client = await TMongo.connect();
-  return await client.collection("tenant").find().toArray();
+  return await client.collection("tenant").find({}).project({
+    id: 1,
+    tiny_token: 1,
+    tenant_pai: 1,
+    nome: 1,
+    id_tenant: 1,
+    id_empresa: 1
+  }).toArray();
 }
 
 async function getTokenByTenantId(idTenant) {
@@ -11,18 +18,6 @@ async function getTokenByTenantId(idTenant) {
     throw new Error(`A consulta não retornou dados: ${idTenant}`);
   }
   return tenant.tiny_token;
-}
-
-async function getTenantByClientId(client_id) {
-  const client = await TMongo.connect();
-  const tenant = await client
-    .collection("tenant")
-    .findOne({ vendizap_client_id: client_id.toString() });
-
-  if (!tenant || tenant == null || tenant === undefined) {
-    console.log(`A consulta não retornou dados: ${client_id}`);
-  }
-  return tenant;
 }
 
 async function getTenantById(id_tenant) {
@@ -37,7 +32,6 @@ async function getTenantPai(id_tenant) {
 export const tenantRepository = {
   getAllTenantSystem,
   getTokenByTenantId,
-  getTenantByClientId,
   getTenantById,
   getTenantPai,
 };

@@ -15,6 +15,7 @@ import { nfeController } from "./controller/nfeController.js";
 import { cfopController } from "./controller/cfopController.js";
 import { tributacaoController } from "./controller/tributacaoController.js";
 import { apurarRoyaltiesController } from "./controller/apurarRoyaltiesController.js";
+import { produtoRoyaltyController } from "./controller/produtoRoyaltyController.js";
 
 global.processandoNow = 0;
 
@@ -31,6 +32,7 @@ async function task() {
   await listaPrecoExcecoesController.init();
   await nfeController.init();
   await apurarRoyaltiesController.init();
+  await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
 
   //executar 1 x por dia
   let key = "Tarefa diaria";
@@ -42,7 +44,6 @@ async function task() {
     await empresaController.init();
     await estoqueController.init();
   }
-  //await vendaController.init();
 
   global.processandoNow = 0;
   console.log(" Job Finished [task] " + lib.currentDateTimeStr());
@@ -57,6 +58,8 @@ async function init() {
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
+
+  //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
   //console.log("Tarefa finalizada em " + lib.currentDateTimeStr());
   //return;
 
