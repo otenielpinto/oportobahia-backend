@@ -4,7 +4,6 @@ import nodeSchedule from "node-schedule";
 
 import { stockRepository } from "./repository/stockRepository.js";
 import { notaFiscalRepository } from "./repository/notafiscalRepository.js";
-import { produtoController } from "./controller/produtoController.js";
 import { productController } from "./controller/productController.js";
 import { empresaController } from "./controller/empresaController.js";
 import { estoqueController } from "./controller/estoqueController.js";
@@ -27,7 +26,6 @@ async function task() {
 
   global.processandoNow = 1;
   await productController.init(); //mongodb
-  await produtoController.init(); //firebird
   await listaPrecoController.init();
   await listaPrecoExcecoesController.init();
   await nfeController.init();
@@ -50,9 +48,8 @@ async function task() {
 }
 
 async function init() {
-  //await productController.init(); //mongodb
+  // await productController.init(); //mongodb
   //await estoqueController.init();
-  //await vendaController.init();
 
   //await apurarRoyaltiesController.init();
   //await nfeController.init();

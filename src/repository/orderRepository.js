@@ -6,7 +6,6 @@ import { tenantRepository } from "./tenantRepository.js";
 import { tinyRepository } from "./tinyRepository.js";
 import { notaFiscalRepository } from "./notafiscalRepository.js";
 import { ecommerceRepository } from "./ecommerceRepository.js";
-import { customerIgnoreRepository } from "./customerIgnoreRepository.js";
 
 import { Tiny } from "../services/tinyService.js";
 import { TinyInfo } from "../services/tinyService.js";
@@ -21,12 +20,15 @@ async function init() {
 async function ajustarOrderNotaFiscal(diaInicial, prefixo) {
   let nfs = await notaFiscalRepository.notasFiscaisPorPeriodo(
     diaInicial,
-    prefixo
+    prefixo,
   );
 
   for (let nf of nfs) {
     console.log(
-      `Excluindo nf: ${nf.data_emissao} ` + nf.id + " order id = " + nf.order.id
+      `Excluindo nf: ${nf.data_emissao} ` +
+        nf.id +
+        " order id = " +
+        nf.order.id,
     );
     await notaFiscalRepository.excluirNotaFiscalOne(nf.id);
     await setStatusOpen(nf.id_tenant, nf.order.id);
@@ -96,7 +98,7 @@ async function receberNfe() {
   //******************************************************** */
 
   let dtLimite = lib.addDays(new Date(), -30);
-  let customers = await customerIgnoreRepository.getAllCustomerIgnore(0);
+  let customers = [];
   let blackList = [];
   for (let customer of customers)
     if (customer?.id && customer?.id?.length > 0) blackList.push(customer?.id);
@@ -105,7 +107,7 @@ async function receberNfe() {
     let id_tenant = order?.id_tenant;
     let id_nota_fiscal = order?.id_nota_fiscal ? order.id_nota_fiscal : null;
     let cnpj = lib.onlyNumber(
-      order?.cliente?.cpf_cnpj ? order.cliente.cpf_cnpj : ""
+      order?.cliente?.cpf_cnpj ? order.cliente.cpf_cnpj : "",
     );
 
     //******************************************************** */
@@ -138,7 +140,7 @@ async function receberNfe() {
     await lib.sleep(1000 * 3);
     try {
       nota_fiscal = await tinyRepository.parseToNotaFiscal(
-        await tinyRepository.notaFiscalObter(id_tenant, id_nota_fiscal)
+        await tinyRepository.notaFiscalObter(id_tenant, id_nota_fiscal),
       );
     } catch (error) {}
 
@@ -172,7 +174,7 @@ async function enviarXml(id_tenant, id_nota_fiscal, order, nota_fiscal, xml) {
       id_nota_fiscal,
       order,
       docXml,
-      nota_fiscal
+      nota_fiscal,
     );
 
     if (statusCode == 200) {
@@ -198,7 +200,7 @@ async function receberPedidos() {
 
     for (let page = page_count; page > 0; page--) {
       console.log(
-        `TenantId[${id_tenant}] - Buscando pedidos API Tiny ${page}/${page_count} as ${lib.currentDateTimeStr()}`
+        `TenantId[${id_tenant}] - Buscando pedidos API Tiny ${page}/${page_count} as ${lib.currentDateTimeStr()}`,
       );
 
       for (let t = 0; t < 5; t++) {
@@ -228,7 +230,7 @@ async function saveOrderMongo(id_tenant, items) {
     return null;
   }
   console.log(
-    "Encontrados " + items.length + " pedidos para o tenant " + id_tenant
+    "Encontrados " + items.length + " pedidos para o tenant " + id_tenant,
   );
 
   const client = await TMongo.connect();
@@ -281,13 +283,13 @@ async function saveOrderMongo(id_tenant, items) {
         .updateOne(
           { id: String(id), id_tenant: Number(id_tenant) },
           { $set: pedido },
-          { upsert: true }
+          { upsert: true },
         );
 
       try {
         await ecommerceRepository.validateEcommerce(
           id_tenant,
-          pedido.ecommerce
+          pedido.ecommerce,
         );
       } catch (error) {}
     }
@@ -306,7 +308,7 @@ async function setStatusOrder(params = {}) {
     .updateOne(
       { id: { $eq: id }, id_tenant: { $eq: id_tenant } },
       { $set: { status: new_status, orderId: orderId } },
-      { upsert: true }
+      { upsert: true },
     );
   return true;
 }
@@ -325,7 +327,7 @@ async function setErrors(params = {}) {
       .updateOne(
         { id: { $eq: id }, id_tenant: { $eq: id_tenant } },
         { $set: { wta_message } },
-        { upsert: true }
+        { upsert: true },
       );
   }
   return true;
@@ -354,7 +356,7 @@ async function retificarDataPedido() {
         .updateOne(
           { _id: item._id },
           { $set: { data_pedido: data } },
-          { upsert: true }
+          { upsert: true },
         );
       await lib.sleep(100);
     }

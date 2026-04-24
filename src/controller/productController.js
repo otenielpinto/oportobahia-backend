@@ -83,7 +83,7 @@ async function receberProdutos() {
     let result = null;
     for (let page = page_count; page > 0; page--) {
       console.log(
-        `TenantId[${id_tenant}] - Recebendo produto API Tiny ${page}/${page_count} as ${lib.currentDateTimeStr()}`
+        `TenantId[${id_tenant}] - Recebendo produto API Tiny ${page}/${page_count} as ${lib.currentDateTimeStr()}`,
       );
 
       for (let t = 0; t < 5; t++) {
