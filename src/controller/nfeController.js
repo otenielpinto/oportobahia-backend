@@ -1,5 +1,4 @@
 import { Tiny, TinyInfo } from "../services/tinyService.js";
-import { TMongo } from "../infra/mongoClient.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { NfeRepository } from "../repository/nfeRepository.js";
 import { xmlParser } from "../utils/xmlParser.js";
@@ -28,10 +27,10 @@ async function importarNotaFiscais(tenant) {
   const numero_paginas = await info.getPaginasNotaFiscal(
     tipoNota,
     dataInicial,
-    dataFinal
+    dataFinal,
   );
 
-  const nfeRepository = new NfeRepository(await TMongo.connect());
+  const nfeRepository = new NfeRepository();
 
   for (let pagina = 1; pagina <= numero_paginas; pagina++) {
     console.log(`Importando Notas Fiscais ${pagina} de ${numero_paginas}`);
@@ -66,7 +65,7 @@ async function importarNotaFiscais(tenant) {
         ) {
           await nfeRepository.delete(nota_fiscal.id);
           console.log(
-            `Nota Fiscal ${nota_fiscal.id} excluida do sistema sit:${nfe?.descricao_situacao}`
+            `Nota Fiscal ${nota_fiscal.id} excluida do sistema sit:${nfe?.descricao_situacao}`,
           );
         }
 
@@ -74,9 +73,9 @@ async function importarNotaFiscais(tenant) {
       }
 
       console.log(
-        `Importando nfe  ${nota_fiscal.id} - ${nota_fiscal.numero} - ${nota_fiscal.data_emissao}`
+        `Importando nfe  ${nota_fiscal.id} - ${nota_fiscal.numero} - ${nota_fiscal.data_emissao}`,
       );
-      let obj = { ...nota_fiscal, tenant_id: tenant.id };
+      let obj = { ...nota_fiscal, id_tenant: tenant.id };
       await nfeRepository.update(obj.id, obj);
     }
   }
@@ -86,12 +85,12 @@ async function importarXml(tenant) {
   let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
   let xml = null;
 
-  const nfeRepository = new NfeRepository(await TMongo.connect());
-  let rows = await nfeRepository.findAll({ tenant_id: tenant.id, sys_xml: 0 });
+  const nfeRepository = new NfeRepository();
+  let rows = await nfeRepository.findAll({ id_tenant: tenant.id, sys_xml: 0 });
 
   for (let row of rows) {
     console.log(
-      `Importando XML ${row.id} de ${row.numero} - ${row.data_emissao}`
+      `Importando XML ${row.id} de ${row.numero} - ${row.data_emissao}`,
     );
 
     xml = null;
@@ -147,12 +146,12 @@ async function obterTipoVenda(items = []) {
 
 async function ajustarNotaFiscal(tenant) {
   let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
-  const nfeRepository = new NfeRepository(await TMongo.connect());
-  let rows = await nfeRepository.findAll({ tenant_id: tenant.id });
+  const nfeRepository = new NfeRepository();
+  let rows = await nfeRepository.findAll({ id_tenant: tenant.id });
 
   for (let row of rows) {
     console.log(
-      `Retificando nota fiscal ${row.id} de ${row.numero} - ${row.data_emissao}`
+      `Retificando nota fiscal ${row.id} de ${row.numero} - ${row.data_emissao}`,
     );
 
     row.tipoVenda = await obterTipoVenda(row?.itens);

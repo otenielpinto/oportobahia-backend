@@ -3,6 +3,9 @@ Crie uma function que vai receber data inicial e data final como parametro .
 Objetivo : apurar os royalties de todas as notas fiscais emitidas entre essas datas e salvar o resultado em uma collection chamada tmp_apuracao_royalties_movto ( ja existente) . mas
 preciso salvar no formato conforme a planilha modelo (/home/oteniel/projetos/oportobahia/oportobahia-backend/src/docs/modelo_planilha.xlsx)
 
+preciso ter um campo para ter como parametro a cotacao_dollar . Esse valor sera gravado em
+tmp_apuracao_royalties_movto e servira para referencias em calculos de royalties posteriormente .
+
 condicionais :
 e os campos dataInicial e dataFinal precisam ser preenchidos com as datas passadas como parametro .
 
@@ -121,7 +124,7 @@ Exemplo collection nota_fical :
 "situacao": "6",
 "sys_status": 1,
 "sys_xml": 1,
-"tenant_id": 1,
+"id_tenant": 1,
 "tipo": "S",
 "tipoVenda": "V",
 "transportador": {

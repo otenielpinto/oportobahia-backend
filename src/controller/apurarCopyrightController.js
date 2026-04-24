@@ -122,7 +122,7 @@ async function processarApuracao(payload) {
             id_grupo: id,
             data_movto: notaFiscal.data_movto,
             chave_acesso: notaFiscal.chave_acesso,
-            tenant_id: notaFiscal.tenant_id,
+            id_tenant: notaFiscal.id_tenant,
             id_venda: notaFiscal.id,
             cliente: notaFiscal.nome,
             numero_nota: notaFiscal.numero,

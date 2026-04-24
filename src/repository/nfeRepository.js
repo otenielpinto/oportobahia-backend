@@ -1,19 +1,15 @@
 //Classe tem letras maiuculoas
+import { Repository } from "./baseRepository.js";
 import { lib } from "../utils/lib.js";
 
-const collection = "nota_fiscal";
-
-export class NfeRepository {
-  constructor(db) {
-    this.db = db;
-  }
-
-  async create(payload) {
-    const result = await this.db.collection(collection).insertOne(payload);
-    return result.insertedId;
+export class NfeRepository extends Repository {
+  constructor(id_tenant = null) {
+    super("nota_fiscal", id_tenant);
   }
 
   async update(id, payload) {
+    const collection = await this.getCollection();
+
     payload.updated_at = new Date();
     if (!payload.sys_status) payload.sys_status = 1;
     if (!payload.sys_xml) payload.sys_xml = 0;
@@ -21,41 +17,14 @@ export class NfeRepository {
       payload.data_movto = lib.dateBrToIso8601(payload.data_emissao);
     }
 
-    const result = await this.db
-      .collection(collection)
-      .updateOne({ id: String(id) }, { $set: payload }, { upsert: true });
-    return result.modifiedCount > 0;
-  }
+    let filter = { id: String(id) };
+    filter = this._addTenantToQuery(filter);
 
-  async delete(id) {
-    const result = await this.db
-      .collection(collection)
-      .deleteOne({ id: String(id) });
-    return result.deletedCount > 0;
-  }
-
-  async findAll(criterio = {}) {
-    return await this.db.collection(collection).find(criterio).toArray();
-  }
-
-  async findById(id) {
-    return await this.db.collection(collection).findOne({ id: String(id) });
-  }
-
-  async insertMany(items) {
-    if (!Array.isArray(items)) return null;
-    try {
-      return await this.db.collection(collection).insertMany(items);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  async deleteMany(criterio = {}) {
-    try {
-      return await this.db.collection(collection).deleteMany(criterio);
-    } catch (e) {
-      console.log(e);
-    }
+    const result = await collection.updateOne(
+      filter,
+      { $set: payload },
+      { upsert: true }
+    );
+    return result;
   }
 }

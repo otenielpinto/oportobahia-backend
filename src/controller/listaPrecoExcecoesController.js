@@ -20,10 +20,10 @@ async function init() {
 
 async function importarListaPreco(tenant) {
   let listaRepository = new ListaPrecoRepository(await TMongo.connect());
-  let listaPreco = await listaRepository.findAll({ tenant_id: tenant.id });
+  let listaPreco = await listaRepository.findAll({ id_tenant: tenant.id });
 
   const listaPrecoExcecoesRepository = new ListaPrecoExcecoesRepository(
-    await TMongo.connect()
+    await TMongo.connect(),
   );
 
   let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
@@ -36,7 +36,7 @@ async function importarListaPreco(tenant) {
 
     for (let pagina = 1; pagina <= numero_paginas; pagina++) {
       console.log(
-        `Importando lista [${lista.id}] de preços excecoes  ${pagina} de ${numero_paginas}`
+        `Importando lista [${lista.id}] de preços excecoes  ${pagina} de ${numero_paginas}`,
       );
 
       response = null;
@@ -53,13 +53,13 @@ async function importarListaPreco(tenant) {
 
       for (let item of response) {
         console.log(
-          `Importando lista [${item.registro.id_lista_preco}] de preços excecoes ${item.registro.id}`
+          `Importando lista [${item.registro.id_lista_preco}] de preços excecoes ${item.registro.id}`,
         );
         let obj = {
           ...item.registro,
           acrescimo_desconto: lista.acrescimo_desconto,
           descricao: lista.descricao,
-          tenant_id: tenant.id,
+          id_tenant: tenant.id,
           updateAt: new Date(),
         };
         await listaPrecoExcecoesRepository.update(obj.id, obj);

@@ -8,6 +8,10 @@ class ProdutoRoyaltyRepository extends Repository {
   // Métodos personalizados específicos para ProdutoRoyalty podem ser adicionados aqui
   // Os métodos básicos (create, update, delete, findAll, findById, etc.)
   // já estão disponíveis através da herança da Repository
+
+  async findByGtinEan(gtinEan) {
+    return this.findOne({ gtinEan });
+  }
 }
 
 export { ProdutoRoyaltyRepository };
