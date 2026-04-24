@@ -1,5 +1,4 @@
 import { Tiny, TinyInfo } from "../services/tinyService.js";
-import { TMongo } from "../infra/mongoClient.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { ListaPrecoRepository } from "../repository/listaPrecoRepository.js";
 import { serviceRepository } from "../repository/serviceRepository.js";
@@ -19,12 +18,10 @@ async function init() {
 }
 
 async function importarListaPreco(tenant) {
-  let listaRepository = new ListaPrecoRepository(await TMongo.connect());
+  let listaRepository = new ListaPrecoRepository();
   let listaPreco = await listaRepository.findAll({ id_tenant: tenant.id });
 
-  const listaPrecoExcecoesRepository = new ListaPrecoExcecoesRepository(
-    await TMongo.connect(),
-  );
+  const listaPrecoExcecoesRepository = new ListaPrecoExcecoesRepository(tenant.id);
 
   let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
   let info = new TinyInfo({ instance: tiny });
@@ -60,7 +57,6 @@ async function importarListaPreco(tenant) {
           acrescimo_desconto: lista.acrescimo_desconto,
           descricao: lista.descricao,
           id_tenant: tenant.id,
-          updateAt: new Date(),
         };
         await listaPrecoExcecoesRepository.update(obj.id, obj);
         await lib.sleep(500);

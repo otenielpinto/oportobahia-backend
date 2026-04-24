@@ -1,5 +1,4 @@
 import { Tiny, TinyInfo } from "../services/tinyService.js";
-import { TMongo } from "../infra/mongoClient.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { ListaPrecoRepository } from "../repository/listaPrecoRepository.js";
 import { serviceRepository } from "../repository/serviceRepository.js";
@@ -22,7 +21,7 @@ async function importarListaPreco(tenant) {
   let result = null;
   let response = null;
   const numero_paginas = await info.getPaginasListaPrecos();
-  const listaRepository = new ListaPrecoRepository(await TMongo.connect());
+  const listaRepository = new ListaPrecoRepository();
 
   for (let pagina = 1; pagina <= numero_paginas; pagina++) {
     console.log(`Importando lista de preços ${pagina} de ${numero_paginas}`);
@@ -42,7 +41,6 @@ async function importarListaPreco(tenant) {
         let obj = {
           ...item.registro,
           id_tenant: tenant.id,
-          updateAt: new Date(),
         };
         await listaRepository.update(obj.id, obj);
         await lib.sleep(500);
