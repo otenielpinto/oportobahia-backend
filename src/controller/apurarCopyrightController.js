@@ -12,7 +12,7 @@ async function init() {
 
 async function processarFila() {
   const apuracaoCurrentRepository = new ApuracaoCurrentRepository(
-    await TMongo.connect()
+    await TMongo.connect(),
   );
 
   const thirtyDaysAgo = new Date();
@@ -69,7 +69,7 @@ async function processarApuracao(payload) {
           //Obrigatório estar no catalogo
           if (!catalogo) {
             console.log(
-              `Produto não encontrado no catálogo para o GTIN: ${barcode}`
+              `Produto não encontrado no catálogo para o GTIN: ${barcode}`,
             );
             continue;
           }
@@ -91,7 +91,7 @@ async function processarApuracao(payload) {
 
           if (!listaPreco) {
             messages.push(
-              `Tabela de preço não encontrada para o id: ${produto.id} - GTIN: ${barcode}`
+              `Tabela de preço não encontrada para o id: ${produto.id} - GTIN: ${barcode}`,
             );
             continue;
           }
@@ -108,7 +108,7 @@ async function processarApuracao(payload) {
           let extra_copyright = 0;
           if (trackDifference < 0) {
             extra_copyright = lib.round(
-              Math.abs(trackDifference) * trackPercentage
+              Math.abs(trackDifference) * trackPercentage,
             );
           }
 
@@ -137,7 +137,7 @@ async function processarApuracao(payload) {
             valor_nf_unitario: parseFloat(item.prod.vUnCom),
             valor_nf_desconto: parseFloat(item.prod.vDesc),
             valor_nf_liquido: lib.round(
-              parseFloat(item.prod.vProd) - parseFloat(item.prod.vDesc)
+              parseFloat(item.prod.vProd) - parseFloat(item.prod.vDesc),
             ),
             valor_unitario: tabela_preco,
             valor_total: valor_total,
@@ -153,7 +153,7 @@ async function processarApuracao(payload) {
         } catch (error) {
           console.error(
             `Erro ao processar o produto ${item.prod.cEAN}:`,
-            error
+            error,
           );
         }
       }
@@ -180,10 +180,10 @@ export async function processarApuracaoItem({ item }) {
       // Adicionar campos na raiz do item
       item.baseCalculo = lib.round((item.valor_liquido * percentual) / 100);
       item.valorRoyalties = lib.round(
-        (item.baseCalculo * item.tx_copyright) / 100
+        (item.baseCalculo * item.tx_copyright) / 100,
       );
       item.valorRoyaltiesPorFaixa = lib.round(
-        item.valorRoyalties / numberOfTracks
+        item.valorRoyalties / numberOfTracks,
       );
 
       let sum_valor_royalties = 0;
@@ -197,7 +197,7 @@ export async function processarApuracaoItem({ item }) {
               publisher.valor_royalties = lib.round(
                 (item.valorRoyaltiesPorFaixa *
                   publisher.participationPercentage) /
-                  100
+                  100,
               );
               sum_valor_royalties += lib.round(publisher.valor_royalties);
             }
@@ -212,7 +212,7 @@ export async function processarApuracaoItem({ item }) {
                   publisher.valor_royalties = lib.round(
                     (item.valorRoyaltiesPorFaixa *
                       publisher.participationPercentage) /
-                      100
+                      100,
                   );
                   sum_valor_royalties += lib.round(publisher.valor_royalties);
                 }
@@ -258,7 +258,7 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   } catch (error) {
     console.error("Erro ao recuperar notas fiscais:", error);
     throw new Error(
-      `Erro ao buscar notas fiscais: ${error?.message || "Erro desconhecido"}`
+      `Erro ao buscar notas fiscais: ${error?.message || "Erro desconhecido"}`,
     );
   }
 }
@@ -270,6 +270,6 @@ async function getTaxaCopyright() {
   };
 }
 
-export const apurarRoyaltiesController = {
+export const apurarCopyrightController = {
   init,
 };

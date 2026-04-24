@@ -2,18 +2,15 @@ import { TMongo } from "./infra/mongoClient.js";
 import { lib } from "./utils/lib.js";
 import nodeSchedule from "node-schedule";
 
-import { stockRepository } from "./repository/stockRepository.js";
 import { notaFiscalRepository } from "./repository/notafiscalRepository.js";
 import { productController } from "./controller/productController.js";
-import { empresaController } from "./controller/empresaController.js";
-import { estoqueController } from "./controller/estoqueController.js";
 import { serviceRepository } from "./repository/serviceRepository.js";
 import { listaPrecoController } from "./controller/listaPrecoController.js";
 import { listaPrecoExcecoesController } from "./controller/listaPrecoExcecoesController.js";
 import { nfeController } from "./controller/nfeController.js";
 import { cfopController } from "./controller/cfopController.js";
 import { tributacaoController } from "./controller/tributacaoController.js";
-import { apurarRoyaltiesController } from "./controller/apurarRoyaltiesController.js";
+import { apurarCopyrightController } from "./controller/apurarCopyrightController.js";
 import { produtoRoyaltyController } from "./controller/produtoRoyaltyController.js";
 
 global.processandoNow = 0;
@@ -29,7 +26,7 @@ async function task() {
   await listaPrecoController.init();
   await listaPrecoExcecoesController.init();
   await nfeController.init();
-  await apurarRoyaltiesController.init();
+  await apurarCopyrightController.init();
   await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
 
   //executar 1 x por dia
@@ -39,8 +36,6 @@ async function task() {
     await serviceRepository.updateService(tenant_id, key);
     await cfopController.init();
     await tributacaoController.init();
-    await empresaController.init();
-    await estoqueController.init();
   }
 
   global.processandoNow = 0;
@@ -48,10 +43,7 @@ async function task() {
 }
 
 async function init() {
-  // await productController.init(); //mongodb
-  //await estoqueController.init();
-
-  //await apurarRoyaltiesController.init();
+  //await productController.init(); //mongodb
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
