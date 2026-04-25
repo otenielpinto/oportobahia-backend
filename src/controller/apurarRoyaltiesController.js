@@ -25,16 +25,15 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   }
 }
 
-async function apurarRoyalties({ fromDate, toDate, cotacaoDollar, id_tenant }) {
-  if (!fromDate || !toDate || !cotacaoDollar || !id_tenant) {
-    throw new Error(
-      "Parâmetros obrigatórios: fromDate, toDate, cotacaoDollar, id_tenant",
-    );
-  }
+export async function _processarCab(cab) {
+  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant } = cab;
 
+  const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
+
+  // 3. Buscar notas fiscales
   const notasFiscais = await getNotasFiscaisPorPeriodo({
-    fromDate,
-    toDate,
+    fromDate: dataInicial,
+    toDate: dataFinal,
     tipoVenda: "V",
   });
 
@@ -43,8 +42,6 @@ async function apurarRoyalties({ fromDate, toDate, cotacaoDollar, id_tenant }) {
   }
 
   const produtoRepo = new ProdutoRoyaltyRepository(id_tenant);
-  const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
-
   const itensParaInserir = [];
 
   for (const nf of notasFiscais) {
@@ -56,13 +53,17 @@ async function apurarRoyalties({ fromDate, toDate, cotacaoDollar, id_tenant }) {
       if (!produtoRoyalty) continue;
 
       itensParaInserir.push({
+        // FK hacia cabecera
+        id_royalty_cab: id,
+
         // Header
         id: lib.newUUId(),
-        dataInicial: fromDate,
-        dataFinal: toDate,
+        dataInicial: dataInicial,
+        dataFinal: dataFinal,
         cotacaoDollar: cotacaoDollar,
         id_tenant: id_tenant,
         createdAt: new Date(),
+        data_movto: nf.data_movto || null,
 
         // NF fields
         clienteCpfCnpj: nf.cliente?.cpf_cnpj || "",
@@ -125,15 +126,16 @@ async function apurarRoyalties({ fromDate, toDate, cotacaoDollar, id_tenant }) {
     }
   }
 
-  if (itensParaInserir.length === 0) {
+  const totalMovimentos = itensParaInserir.length;
+
+  if (totalMovimentos === 0) {
     return { insertedCount: 0 };
   }
 
+  // 4. Insertar movimientos con id_royalty_cab
   await movtoRepo.insertMany(itensParaInserir);
 
-  return { insertedCount: itensParaInserir.length };
+  return { insertedCount: totalMovimentos };
 }
 
-export const apurarRoyaltiesController = {
-  apurarRoyalties,
-};
+export const apurarRoyaltiesController = {};

@@ -12,7 +12,8 @@ import { cfopController } from "./controller/cfopController.js";
 import { tributacaoController } from "./controller/tributacaoController.js";
 import { apurarCopyrightController } from "./controller/apurarCopyrightController.js";
 import { produtoRoyaltyController } from "./controller/produtoRoyaltyController.js";
-import { apurarRoyaltiesController } from "./controller/apurarRoyaltiesController.js";
+
+import { apuracaoRoyaltiesCabController } from "./controller/apuracaoRoyaltiesCabController.js";
 
 global.processandoNow = 0;
 
@@ -28,6 +29,7 @@ async function task() {
   await listaPrecoExcecoesController.init();
   await nfeController.init();
   await apurarCopyrightController.init();
+  await apuracaoRoyaltiesCabController.init();
   await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
 
   //executar 1 x por dia
@@ -48,18 +50,11 @@ async function init() {
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
-
   //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
-  //testando relatorio de apuracao de royalties
-  // await apurarRoyaltiesController.apurarRoyalties({
-  //   fromDate: new Date("2026-03-01"),
-  //   toDate: new Date("2026-03-31"),
-  //   cotacaoDollar: 5.25,
-  //   id_tenant: 1,
-  // });
 
-  // console.log("Tarefa finalizada em " + lib.currentDateTimeStr());
-  // return;
+  //await apuracaoRoyaltiesCabController.init();
+  //console.log("Fim processsamento inicial. Iniciando agenda...");
+  //return;
 
   try {
     const time = 12; //tempo em minutos

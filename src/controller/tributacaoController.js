@@ -1,5 +1,4 @@
 import { Tiny, TinyInfo } from "../services/tinyService.js";
-import { TMongo } from "../infra/mongoClient.js";
 import { TributacaoRepository } from "../repository/tributacaoRepository.js";
 import { lib } from "../utils/lib.js";
 
@@ -8,7 +7,7 @@ async function init() {
 }
 
 async function cargaInicialTributacao() {
-  const tributacaoRepository = new TributacaoRepository(await TMongo.connect());
+  const tributacaoRepository = new TributacaoRepository();
 
   let items = [];
   items.push({
@@ -30,7 +29,7 @@ async function cargaInicialTributacao() {
 }
 
 async function importarTributacao() {
-  const tributacaoRepository = new TributacaoRepository(await TMongo.connect());
+  const tributacaoRepository = new TributacaoRepository();
   let items = await tributacaoRepository.findAll({});
 
   if (!items || items.length == 0) {
