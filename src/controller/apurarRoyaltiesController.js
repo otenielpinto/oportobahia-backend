@@ -2,6 +2,9 @@ import { TMongo } from "../infra/mongoClient.js";
 import { lib } from "../utils/lib.js";
 import { ProdutoRoyaltyRepository } from "../repository/produtoRoyaltyRepository.js";
 import { ApuracaoRoyaltiesMovtoRepository } from "../repository/apuracaoRoyaltiesMovtoRepository.js";
+import { EmpresaRepository } from "../repository/empresaRepository.js";
+import { TributacaoRepository } from "../repository/tributacaoRepository.js";
+import { CalculoImpostoService } from "../services/calculoImpostoService.js";
 
 //Obs : Decidi criar a function aqui e estou consciente
 async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
@@ -29,6 +32,16 @@ export async function _processarCab(cab) {
   const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant } = cab;
 
   const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
+  const tributacaoRepo = new TributacaoRepository(id_tenant);
+  const impostoService = new CalculoImpostoService(tributacaoRepo);
+
+  // Fetch empresa data for uf_origem field
+  const empresaRepo = new EmpresaRepository(id_tenant);
+  const empresa = await empresaRepo.findById(id_tenant);
+  const uf_origem = empresa?.uf || "";
+
+  // Buscar dados de tributação (regra padrão)
+  const tributacao = await tributacaoRepo.findOne({ id: 1 });
 
   // 3. Buscar notas fiscales
   const notasFiscais = await getNotasFiscaisPorPeriodo({
@@ -52,6 +65,49 @@ export async function _processarCab(cab) {
 
       if (!produtoRoyalty) continue;
 
+      // Calcular percentuais de impostos usando o serviço
+      const uf_destino = nf.cliente?.uf || "";
+      const valor_produto = parseFloat(item.prod.vProd) || 0;
+      const desconto = parseFloat(item.prod.vDesc) || 0;
+      const valor_frete = parseFloat(nf.ICMSTot?.vFrete) || 0;
+
+      let percentualIcms = 0;
+      let percentualCofins = 0;
+      let percentualPis = 0;
+      let percentualIpi = 0;
+      let valorIcms = 0;
+      let valorCofins = 0;
+      let valorPis = 0;
+      let valorIpi = 0;
+      let totalImpostos = 0;
+      let baseCalculo = 0;
+
+      if (tributacao) {
+        try {
+          const resultadoImpostos = impostoService.calcular({
+            valor_produto,
+            valor_frete,
+            valor_desconto: desconto,
+            uf_origem,
+            uf_destino,
+            tributacao,
+          });
+
+          percentualIcms = resultadoImpostos.icms.aliquota;
+          percentualCofins = resultadoImpostos.cofins.aliquota;
+          percentualPis = resultadoImpostos.pis.aliquota;
+          percentualIpi = resultadoImpostos.ipi.aliquota;
+          valorIcms = resultadoImpostos.icms.valor;
+          valorCofins = resultadoImpostos.cofins.valor;
+          valorPis = resultadoImpostos.pis.valor;
+          valorIpi = resultadoImpostos.ipi.valor;
+          totalImpostos = resultadoImpostos.total_impostos;
+          baseCalculo = resultadoImpostos.base_calculo;
+        } catch (error) {
+          console.warn("Erro ao calcular impostos:", error.message);
+        }
+      }
+
       itensParaInserir.push({
         // FK hacia cabecera
         id_royalty_cab: id,
@@ -62,6 +118,7 @@ export async function _processarCab(cab) {
         dataFinal: dataFinal,
         cotacaoDollar: cotacaoDollar,
         id_tenant: id_tenant,
+        uf_origem: uf_origem,
         createdAt: new Date(),
         data_movto: nf.data_movto || null,
 
@@ -84,11 +141,11 @@ export async function _processarCab(cab) {
         valorMercadoria: parseFloat(item.prod.vProd) || 0,
         desconto: parseFloat(item.prod.vDesc) || 0,
 
-        // Tax fields (from nf.ICMSTot)
-        icms: parseFloat(nf.ICMSTot?.vICMS) || 0,
-        cofins: parseFloat(nf.ICMSTot?.vCOFINS) || 0,
-        pis: parseFloat(nf.ICMSTot?.vPIS) || 0,
-        ipi: parseFloat(nf.ICMSTot?.vIPI) || 0,
+        // Tax fields (calculated from service)
+        icms: valorIcms,
+        cofins: valorCofins,
+        pis: valorPis,
+        ipi: valorIpi,
 
         // From produto royalty
         catalogo: produtoRoyalty.descricaoTitulo || "",
@@ -106,20 +163,21 @@ export async function _processarCab(cab) {
         listaPreco: produtoRoyalty.listaPreco || "",
         ncm: produtoRoyalty.ncm || "",
 
-        // All calc fields zeroed
+        // Calculated fields
         totalLista: 0,
+        totalImpostos: totalImpostos,
         percentualDesconto: 0,
-        percentualIcms: 0,
-        percentualCofins: 0,
-        percentualPis: 0,
-        percentualIpi: 0,
+        percentualIcms: percentualIcms,
+        percentualCofins: percentualCofins,
+        percentualPis: percentualPis,
+        percentualIpi: percentualIpi,
         valorSemImpostos: 0,
         percentualCusto: 0,
         baseCalculoRoyalties: 0,
         valorRoyalties: 0,
         percentualFaixas: 0,
         limite: 0,
-        baseCalculo: 0,
+        baseCalculo: baseCalculo,
         copyrightNormal: 0,
         percentual: 0,
       });

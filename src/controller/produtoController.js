@@ -67,7 +67,7 @@ async function receberProdutos() {
   for (let tenant of tenants) {
     let id_tenant = tenant.id;
     if (tenant.tenant_pai != tenant.id) continue;
-    if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
+    //if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
     await serviceRepository.updateService(id_tenant, key);
 
     const productRepository = new ProdutoRepository(id_tenant);

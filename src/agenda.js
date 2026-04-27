@@ -46,6 +46,8 @@ async function task() {
 }
 
 async function init() {
+  //excluir collection product  (renomeado para tmp_produto)
+
   //await produtoController.init(); //mongodb
   //await nfeController.init();
   //await listaPrecoController.init();

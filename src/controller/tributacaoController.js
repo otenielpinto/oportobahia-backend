@@ -21,6 +21,8 @@ async function cargaInicialTributacao() {
     pis: 1.65,
     cofins: 7.6,
     simples_aliquota: 0,
+    id_empresa: 1,
+    id_tenant: 1, //tem que ser o mesmo codigo da id
   });
 
   for (let item of items) {
@@ -33,7 +35,7 @@ async function importarTributacao() {
   let items = await tributacaoRepository.findAll({});
 
   if (!items || items.length == 0) {
-    cargaInicialTributacao();
+    await cargaInicialTributacao();
   }
 }
 

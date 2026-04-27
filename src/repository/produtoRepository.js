@@ -5,7 +5,7 @@ export class ProdutoRepository extends Repository {
     if (!id_tenant) {
       throw new Error("ProdutoRepository: id_tenant es requerido");
     }
-    super("product", id_tenant);
+    super("tmp_produto", id_tenant);
   }
 
   /**
@@ -26,9 +26,9 @@ export class ProdutoRepository extends Repository {
       filter,
       {
         $set: data,
-        $setOnInsert: { createdAt: new Date() }
+        $setOnInsert: { createdAt: new Date() },
       },
-      { upsert: true }
+      { upsert: true },
     );
     return result.modifiedCount > 0 || result.upsertedCount > 0;
   }
