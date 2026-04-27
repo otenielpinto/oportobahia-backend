@@ -192,7 +192,7 @@ async function getProductDetailBySku(id_tenant, codigo) {
 
 //CRIA CLASSE PRODUCT_DETAIL----------------------------------------------------------------
 
-export const productController = {
+export const produtoController = {
   init,
 
   receberProdutos,

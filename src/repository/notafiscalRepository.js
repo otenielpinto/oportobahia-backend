@@ -7,7 +7,7 @@ import { vendedorRepository } from "./vendedorRepository.js";
 import { logRepository } from "./logRepository.js";
 import { CustomerRepository } from "./customerRepository.js";
 import { TNfeTypes } from "../types/nfeTypes.js";
-import { productController } from "../controller/productController.js";
+import { produtoController } from "../controller/produtoController.js";
 import { TributacaoMappers } from "../mappers/tributacaoMappers.js";
 import { tinyRepository } from "./tinyRepository.js";
 import { xmlParser } from "../utils/xmlParser.js";
@@ -98,14 +98,14 @@ async function updateProdutoNotaFiscal(id_tenant, items) {
   for (let item of items) {
     if (LIST_OF_PRODUCTS.includes(item.codigo)) continue;
 
-    let prod = await productController.getProductDetailBySku(
+    let prod = await produtoController.getProductDetailBySku(
       id_tenant,
       item.codigo
     );
 
     if (prod && prod?.id) {
       await lib.sleep(1000 * 3);
-      await productController.updateProductDetailOne(id_tenant, prod?.id);
+      await produtoController.updateProductDetailOne(id_tenant, prod?.id);
       LIST_OF_PRODUCTS.push(item.codigo);
     }
   }
@@ -414,7 +414,7 @@ async function saveNfeXml(
       custo = Number(item.valor_unitario - 0.01);
       try {
         await lib.sleep(1000 * 3);
-        await productController.updateProductDetailOne(tenant_pai, prod?.id);
+        await produtoController.updateProductDetailOne(tenant_pai, prod?.id);
       } catch (error) {}
     }
     custo = lib.round(custo);
@@ -678,17 +678,17 @@ async function updateOrInsertCliente(id_tenant, cliente) {
 }
 
 async function getProdutoByCodigo(id_tenant, codigo) {
-  let prod = await productController.getProductDetailBySku(id_tenant, codigo);
+  let prod = await produtoController.getProductDetailBySku(id_tenant, codigo);
 
   if (!prod || prod == null || prod == undefined) {
-    let response = await productController.getProductBySku(id_tenant, codigo);
+    let response = await produtoController.getProductBySku(id_tenant, codigo);
     if (response && response?.id) {
-      await productController.updateProductDetailOne(
+      await produtoController.updateProductDetailOne(
         id_tenant,
         String(response?.id)
       );
     }
-    prod = await productController.getProductDetailBySku(id_tenant, codigo);
+    prod = await produtoController.getProductDetailBySku(id_tenant, codigo);
   }
 
   if (!prod || prod == null || prod == undefined) {

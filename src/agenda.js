@@ -3,7 +3,7 @@ import { lib } from "./utils/lib.js";
 import nodeSchedule from "node-schedule";
 
 import { notaFiscalRepository } from "./repository/notafiscalRepository.js";
-import { productController } from "./controller/productController.js";
+import { produtoController } from "./controller/produtoController.js";
 import { serviceRepository } from "./repository/serviceRepository.js";
 import { listaPrecoController } from "./controller/listaPrecoController.js";
 import { listaPrecoExcecoesController } from "./controller/listaPrecoExcecoesController.js";
@@ -24,7 +24,7 @@ async function task() {
   }
 
   global.processandoNow = 1;
-  await productController.init(); //mongodb
+  await produtoController.init(); //mongodb
   await listaPrecoController.init();
   await listaPrecoExcecoesController.init();
   await nfeController.init();
@@ -46,7 +46,7 @@ async function task() {
 }
 
 async function init() {
-  //await productController.init(); //mongodb
+  //await produtoController.init(); //mongodb
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
