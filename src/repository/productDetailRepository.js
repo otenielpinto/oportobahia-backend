@@ -1,54 +1,19 @@
-//Classe tem letras maiuculoas
+import { Repository } from "./baseRepository.js";
 
-const collection = "product_detail";
-
-export class ProductDetailRepository {
-  constructor(db) {
-    this.db = db;
-  }
-
-  async create(payload) {
-    const result = await this.db.collection(collection).insertOne(payload);
-    return result.insertedId;
-  }
-
-  async update(id, payload) {
-    payload.updated_at = new Date();
-    const result = await this.db
-      .collection(collection)
-      .updateOne({ id: String(id) }, { $set: payload }, { upsert: true });
-    return result.modifiedCount > 0;
-  }
-
-  async delete(id) {
-    const result = await this.db
-      .collection(collection)
-      .deleteOne({ id: String(id) });
-    return result.deletedCount > 0;
-  }
-
-  async findAll(criterio = {}) {
-    return await this.db.collection(collection).find(criterio).toArray();
-  }
-
-  async findById(id) {
-    return await this.db.collection(collection).findOne({ id: String(id) });
-  }
-
-  async insertMany(items) {
-    if (!Array.isArray(items)) return null;
-    try {
-      return await this.db.collection(collection).insertMany(items);
-    } catch (e) {
-      console.log(e);
+export class ProductDetailRepository extends Repository {
+  constructor(id_tenant) {
+    if (!id_tenant) {
+      throw new Error("ProductDetailRepository: id_tenant es requerido");
     }
+    super("product_detail", id_tenant);
   }
 
-  async deleteMany(criterio = {}) {
-    try {
-      return await this.db.collection(collection).deleteMany(criterio);
-    } catch (e) {
-      console.log(e);
-    }
+  /**
+   * Busca producto por SKU (código)
+   * @param {string} sku - Código/SKU del producto
+   * @returns {Promise<object|null>} - Producto encontrado o null
+   */
+  async findBySku(sku) {
+    return await this.findOne({ codigo: String(sku) });
   }
 }

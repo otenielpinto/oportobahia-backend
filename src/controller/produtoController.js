@@ -1,4 +1,3 @@
-import { TMongo } from "../infra/mongoClient.js";
 import { lib } from "../utils/lib.js";
 import { ProdutoRepository } from "../repository/produtoRepository.js";
 import { TProductTypes } from "../types/productTypes.js";
@@ -7,6 +6,7 @@ import { tinyRepository } from "../repository/tinyRepository.js";
 import { serviceRepository } from "../repository/serviceRepository.js";
 import { Tiny, TinyInfo } from "../services/tinyService.js";
 import { ProductDetailRepository } from "../repository/productDetailRepository.js";
+import { productDetailController } from "./productDetailController.js";
 import { logRepository } from "../repository/logRepository.js";
 
 async function init() {
@@ -67,7 +67,7 @@ async function receberProdutos() {
   for (let tenant of tenants) {
     let id_tenant = tenant.id;
     if (tenant.tenant_pai != tenant.id) continue;
-    //if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
+    if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
     await serviceRepository.updateService(id_tenant, key);
 
     const productRepository = new ProdutoRepository(id_tenant);
@@ -122,7 +122,7 @@ async function receberProdutos() {
 async function updateProductDetailOne(id_tenant, id) {
   let produto = await produtoObter(id_tenant, id);
   if (!produto) return null;
-  let productDetail = new ProductDetailRepository(await TMongo.connect());
+  const productDetail = new ProductDetailRepository(id_tenant);
 
   produto.id_tenant = id_tenant;
   produto.id_empresa = id_tenant;
@@ -162,7 +162,7 @@ async function updateAllProductsDetails(id_tenant) {
 
   let response = null;
 
-  const productDetail = new ProductDetailRepository(await TMongo.connect());
+  const productDetail = new ProductDetailRepository(id_tenant);
   const productRepository = new ProdutoRepository(id_tenant);
 
   for (let product of products) {
@@ -183,11 +183,7 @@ async function updateAllProductsDetails(id_tenant) {
 
 //PRODUCT_DETAIL
 async function getProductDetailBySku(id_tenant, codigo) {
-  const client = await TMongo.connect();
-  const response = await client
-    .collection("product_detail")
-    .findOne({ codigo: String(codigo), id_tenant: id_tenant });
-  return response;
+  return await productDetailController.findBySku(id_tenant, codigo);
 }
 
 //CRIA CLASSE PRODUCT_DETAIL----------------------------------------------------------------
