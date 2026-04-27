@@ -8,6 +8,8 @@ import { TributacaoRepository } from "../repository/tributacaoRepository.js";
 import { ListaPrecoExcecoesRepository } from "../repository/listaPrecoExcecoesRepository.js";
 import { CalculoImpostoService } from "../services/calculoImpostoService.js";
 
+const TAXA_ROYALTIES = 9.0; // Exemplo de taxa de royalties (15%)
+
 //Obs : Decidi criar a function aqui e estou consciente
 async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   try {
@@ -89,7 +91,12 @@ export async function _processarCab(cab) {
       const produto = produtoMap.get(gtin);
       if (!produto) {
         logs.push(
-          gerarLog("PRODUTO_NOT_FOUND", gtin, descricaoProduto, `${numeroNota}-${serieNota}`)
+          gerarLog(
+            "PRODUTO_NOT_FOUND",
+            gtin,
+            descricaoProduto,
+            `${numeroNota}-${serieNota}`,
+          ),
         );
         continue;
       }
@@ -100,7 +107,12 @@ export async function _processarCab(cab) {
       });
       if (!produtoRoyalty) {
         logs.push(
-          gerarLog("ROYALTY_NOT_FOUND", gtin, descricaoProduto, `${numeroNota}-${serieNota}`)
+          gerarLog(
+            "ROYALTY_NOT_FOUND",
+            gtin,
+            descricaoProduto,
+            `${numeroNota}-${serieNota}`,
+          ),
         );
         continue;
       }
@@ -119,8 +131,8 @@ export async function _processarCab(cab) {
             "PRECO_NOT_FOUND",
             gtin,
             descricaoProduto,
-            `${numeroNota}-${serieNota} | ID: ${produto.id} | Lista: ${produtoRoyalty.listaPreco}`
-          )
+            `${numeroNota}-${serieNota} | ID: ${produto.id} | Lista: ${produtoRoyalty.listaPreco}`,
+          ),
         );
       }
 
@@ -136,8 +148,8 @@ export async function _processarCab(cab) {
             "VALOR_UNITARIO_ZERO",
             gtin,
             descricaoProduto,
-            `${numeroNota}-${serieNota} | Valor: ${valorUnitLista}`
-          )
+            `${numeroNota}-${serieNota} | Valor: ${valorUnitLista}`,
+          ),
         );
       }
 
@@ -157,6 +169,13 @@ export async function _processarCab(cab) {
       let valorIpi = 0;
       let totalImpostos = 0;
       let baseCalculo = 0;
+      let custoOperativo = 0;
+      let percentualCustoOperativo = TAXA_ROYALTIES;
+      let tipo = produtoRoyalty.tipo || "";
+
+      if (valor_produto > 0) {
+        custoOperativo = lib.round((valor_produto * TAXA_ROYALTIES) / 100, 2);
+      }
 
       if (tributacao) {
         try {
@@ -182,6 +201,21 @@ export async function _processarCab(cab) {
         } catch (error) {
           console.warn("Erro ao calcular impostos:", error.message);
         }
+      }
+
+      let valorSemImpostos = lib.round(valor_produto - totalImpostos, 2);
+      let baseCalculoRoyalties = lib.round(
+        valorSemImpostos - custoOperativo,
+        2,
+      );
+      let valorRoyalties = 0;
+      let percentualRoyalties = produtoRoyalty.percentual || 0;
+
+      if (baseCalculoRoyalties > 0 && percentualRoyalties > 0) {
+        valorRoyalties = lib.round(
+          (baseCalculoRoyalties * percentualRoyalties) / 100,
+          2,
+        );
       }
 
       itensParaInserir.push({
@@ -227,10 +261,11 @@ export async function _processarCab(cab) {
         catalogo: produtoRoyalty.descricaoTitulo || "",
         serieAlbum: produtoRoyalty.marca || "",
         valorUnitLista: valorUnitLista,
-        custoOperativo: produtoRoyalty.precoCusto || 0,
+        custoOperativo: custoOperativo || 0,
+        percentualCustoOperativo: percentualCustoOperativo || 0,
         nivelRoyalties: produtoRoyalty.nivelRoyalty || "",
-        percentualRoyalties: produtoRoyalty.percentual || 0,
-        tipo: produtoRoyalty.tipo || "",
+        percentualRoyalties: percentualRoyalties,
+        tipo: tipo || "",
         numDiscos: produtoRoyalty.numeroDiscos || 0,
         numFaixas: produtoRoyalty.numeroFaixas || 0,
         sku: produtoRoyalty.sku || "",
@@ -247,10 +282,10 @@ export async function _processarCab(cab) {
         percentualCofins: percentualCofins,
         percentualPis: percentualPis,
         percentualIpi: percentualIpi,
-        valorSemImpostos: 0,
+        valorSemImpostos: valorSemImpostos,
         percentualCusto: 0,
-        baseCalculoRoyalties: 0,
-        valorRoyalties: 0,
+        baseCalculoRoyalties: baseCalculoRoyalties,
+        valorRoyalties: valorRoyalties,
         percentualFaixas: 0,
         limite: 0,
         baseCalculo: baseCalculo,
