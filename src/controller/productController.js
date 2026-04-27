@@ -1,6 +1,6 @@
 import { TMongo } from "../infra/mongoClient.js";
 import { lib } from "../utils/lib.js";
-import { ProductRepository } from "../repository/productRepository.js";
+import { ProdutoRepository } from "../repository/produtoRepository.js";
 import { TProductTypes } from "../types/productTypes.js";
 import { tenantRepository } from "../repository/tenantRepository.js";
 import { tinyRepository } from "../repository/tinyRepository.js";
@@ -41,27 +41,26 @@ async function produtoObter(id_tenant, id) {
 }
 
 async function getProductBySku(id_tenant, sku) {
-  let productRepository = new ProductRepository(await TMongo.connect());
-  return await productRepository.findBySku(sku, id_tenant);
+  let productRepository = new ProdutoRepository(id_tenant);
+  return await productRepository.findBySku(sku);
 }
 
 async function getProductByGtin(id_tenant, gtin) {
-  let productRepository = new ProductRepository(await TMongo.connect());
-  return await productRepository.findByGtin(gtin, id_tenant);
+  let productRepository = new ProdutoRepository(id_tenant);
+  return await productRepository.findByGtin(gtin);
 }
 
 async function getProductByNome(id_tenant, nome) {
-  let productRepository = new ProductRepository(await TMongo.connect());
-  return await productRepository.findByNome(nome, id_tenant);
+  let productRepository = new ProdutoRepository(id_tenant);
+  return await productRepository.findByNome(nome);
 }
 
 async function getProductById(id_tenant, id) {
-  let productRepository = new ProductRepository(await TMongo.connect());
+  let productRepository = new ProdutoRepository(id_tenant);
   return await productRepository.findById(id);
 }
 
 async function receberProdutos() {
-  const productRepository = new ProductRepository(await TMongo.connect());
   let deleteMany = 0;
   let key = "Receber Produtos";
   let tenants = await tenantRepository.getAllTenantSystem();
@@ -71,9 +70,11 @@ async function receberProdutos() {
     if ((await serviceRepository.hasExec(id_tenant, key)) == 1) return null;
     await serviceRepository.updateService(id_tenant, key);
 
+    const productRepository = new ProdutoRepository(id_tenant);
+
     if (deleteMany == 0) {
       deleteMany = 1;
-      await productRepository.deleteMany({ id_tenant: tenant.id });
+      await productRepository.deleteMany({});
     }
     let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 11 });
     let info = new TinyInfo({ instance: tiny });
@@ -98,13 +99,14 @@ async function receberProdutos() {
       }
 
       if (!Array.isArray(response)) continue;
+
       let items = [];
       for (let item of response) {
         item.produto.id_tenant = id_tenant;
+        item.produto.id_empresa = id_tenant;
         item.produto.status = TProductTypes.STATUS.PENDENTE;
-        item.produto.created_at = new Date();
-        item.produto.updated_at = null;
-        item.produto.sku = item.produto.codigo; //remove esse campo com o tempo 09/08/2024
+        item.produto.createdAt = new Date();
+        item.produto.updatedAt = null;
 
         item.produto.gtin = item.produto.gtin
           ? item.produto.gtin.replace(/\s+/g, "")
@@ -113,8 +115,8 @@ async function receberProdutos() {
       }
       await productRepository.insertMany(items);
     }
+    return true;
   }
-  return true;
 }
 
 async function updateProductDetailOne(id_tenant, id) {
@@ -123,28 +125,30 @@ async function updateProductDetailOne(id_tenant, id) {
   let productDetail = new ProductDetailRepository(await TMongo.connect());
 
   produto.id_tenant = id_tenant;
+  produto.id_empresa = id_tenant;
   return await productDetail.update(produto.id, response);
 }
 
 async function getAllProduct(params = {}) {
   let id_tenant = params.id_tenant;
-  let filter = { id_tenant };
+  let filter = {};
   if (params?.status) {
-    if (params?.status != null) filter = { id_tenant, status: params.status };
+    if (params?.status != null) filter = { status: params.status };
   }
-  let productRepository = new ProductRepository(await TMongo.connect());
+  let productRepository = new ProdutoRepository(id_tenant);
   return await productRepository.findAll(filter);
 }
 
 async function setStatus(params = {}) {
   let new_status = params.status;
   let id = params.id;
+  let id_tenant = params.id_tenant;
   if (!id) {
     console.log("Necessario informar o id do registro");
     return null;
   }
 
-  let productRepository = new ProductRepository(await TMongo.connect());
+  let productRepository = new ProdutoRepository(id_tenant);
   return await productRepository.update(id, { status: new_status });
 }
 
@@ -157,10 +161,9 @@ async function updateAllProductsDetails(id_tenant) {
   let products = await getAllProduct(params);
 
   let response = null;
-  const c = await TMongo.connect();
 
-  const productDetail = new ProductDetailRepository(c);
-  const productRepository = new ProductRepository(c);
+  const productDetail = new ProductDetailRepository(await TMongo.connect());
+  const productRepository = new ProdutoRepository(id_tenant);
 
   for (let product of products) {
     response = await produtoObter(id_tenant, product.id);
@@ -177,14 +180,6 @@ async function updateAllProductsDetails(id_tenant) {
 }
 
 //--------------CRIA CLASSE PRODUCT_DETAIL-------------------------------------
-
-async function getProductDetailById(id) {
-  const client = await TMongo.connect();
-  const response = await client
-    .collection("product_detail")
-    .findOne({ id: String(id) });
-  return response;
-}
 
 //PRODUCT_DETAIL
 async function getProductDetailBySku(id_tenant, codigo) {
@@ -215,5 +210,4 @@ export const productController = {
   updateProductDetailOne,
   updateAllProductsDetails,
   getProductDetailBySku,
-  getProductDetailById,
 };
