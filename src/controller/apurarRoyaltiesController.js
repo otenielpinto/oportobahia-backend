@@ -1,9 +1,11 @@
 import { TMongo } from "../infra/mongoClient.js";
 import { lib } from "../utils/lib.js";
 import { ProdutoRoyaltyRepository } from "../repository/produtoRoyaltyRepository.js";
+import { ProdutoRepository } from "../repository/produtoRepository.js";
 import { ApuracaoRoyaltiesMovtoRepository } from "../repository/apuracaoRoyaltiesMovtoRepository.js";
 import { EmpresaRepository } from "../repository/empresaRepository.js";
 import { TributacaoRepository } from "../repository/tributacaoRepository.js";
+import { ListaPrecoExcecoesRepository } from "../repository/listaPrecoExcecoesRepository.js";
 import { CalculoImpostoService } from "../services/calculoImpostoService.js";
 
 //Obs : Decidi criar a function aqui e estou consciente
@@ -41,7 +43,7 @@ export async function _processarCab(cab) {
   const uf_origem = empresa?.uf || "";
 
   // Buscar dados de tributação (regra padrão)
-  const tributacao = await tributacaoRepo.findOne({ id: 1 });
+  const tributacao = await tributacaoRepo.findOne({ id: id_tenant });
 
   // 3. Buscar notas fiscales
   const notasFiscais = await getNotasFiscaisPorPeriodo({
@@ -54,16 +56,90 @@ export async function _processarCab(cab) {
     return { insertedCount: 0 };
   }
 
-  const produtoRepo = new ProdutoRoyaltyRepository(id_tenant);
+  const produtoRepo = new ProdutoRepository(id_tenant);
+  const produtos = await produtoRepo.findAll();
+  const produtoMap = new Map(
+    produtos.map((p) => [p.gtin, { id: p.id, codigo: p.codigo, gtin: p.gtin }]),
+  );
+
+  // Repository para buscar preços de lista
+  const listaPrecoExcecoesRepo = new ListaPrecoExcecoesRepository(id_tenant);
+  const produtoRoyaltyRepo = new ProdutoRoyaltyRepository(id_tenant);
+
   const itensParaInserir = [];
+
+  // Log genérico para erros
+  const logs = [];
+
+  // Generar log genérico
+  const gerarLog = (tipo, gtin, descricao, nota) => {
+    return `[${tipo}] GTIN: ${gtin} | Produto: ${descricao} | Nota: ${nota}`;
+  };
 
   for (const nf of notasFiscais) {
     if (!Array.isArray(nf.itens)) continue;
 
     for (const item of nf.itens) {
-      const produtoRoyalty = await produtoRepo.findByGtinEan(item.prod.cEAN);
+      const gtin = item.prod.cEAN;
+      const descricaoProduto = item.prod.xProd || "";
+      const numeroNota = nf.numero || "";
+      const serieNota = nf.serie || "";
 
-      if (!produtoRoyalty) continue;
+      // Buscar produto em tmp_produto (produtoMap) - obtiene ID
+      const produto = produtoMap.get(gtin);
+      if (!produto) {
+        logs.push(
+          gerarLog("PRODUTO_NOT_FOUND", gtin, descricaoProduto, `${numeroNota}-${serieNota}`)
+        );
+        continue;
+      }
+
+      // Buscar dados em tmp_produto_royalty - obtiene listaPreco
+      const produtoRoyalty = await produtoRoyaltyRepo.findOne({
+        gtinEan: gtin,
+      });
+      if (!produtoRoyalty) {
+        logs.push(
+          gerarLog("ROYALTY_NOT_FOUND", gtin, descricaoProduto, `${numeroNota}-${serieNota}`)
+        );
+        continue;
+      }
+
+      // Buscar preço de lista em ListaPrecoExcecoes
+      const precoLista =
+        await listaPrecoExcecoesRepo.findByProdutoAndListaPreco(
+          Number(produto.id),
+          produtoRoyalty.listaPreco,
+        );
+
+      // Log se não encontrar preço de lista
+      if (!precoLista) {
+        logs.push(
+          gerarLog(
+            "PRECO_NOT_FOUND",
+            gtin,
+            descricaoProduto,
+            `${numeroNota}-${serieNota} | ID: ${produto.id} | Lista: ${produtoRoyalty.listaPreco}`
+          )
+        );
+      }
+
+      const valorUnitLista = precoLista ? precoLista.preco : 0;
+      const totalLista = precoLista
+        ? (parseFloat(item.prod.qCom) || 0) * precoLista.preco
+        : 0;
+
+      // Log se valorUnitLista for <= 0
+      if (valorUnitLista <= 0) {
+        logs.push(
+          gerarLog(
+            "VALOR_UNITARIO_ZERO",
+            gtin,
+            descricaoProduto,
+            `${numeroNota}-${serieNota} | Valor: ${valorUnitLista}`
+          )
+        );
+      }
 
       // Calcular percentuais de impostos usando o serviço
       const uf_destino = nf.cliente?.uf || "";
@@ -150,7 +226,7 @@ export async function _processarCab(cab) {
         // From produto royalty
         catalogo: produtoRoyalty.descricaoTitulo || "",
         serieAlbum: produtoRoyalty.marca || "",
-        valUnitLista: produtoRoyalty.precoOporto || 0,
+        valorUnitLista: valorUnitLista,
         custoOperativo: produtoRoyalty.precoCusto || 0,
         nivelRoyalties: produtoRoyalty.nivelRoyalty || "",
         percentualRoyalties: produtoRoyalty.percentual || 0,
@@ -164,7 +240,7 @@ export async function _processarCab(cab) {
         ncm: produtoRoyalty.ncm || "",
 
         // Calculated fields
-        totalLista: 0,
+        totalLista: totalLista,
         totalImpostos: totalImpostos,
         percentualDesconto: 0,
         percentualIcms: percentualIcms,
@@ -187,13 +263,19 @@ export async function _processarCab(cab) {
   const totalMovimentos = itensParaInserir.length;
 
   if (totalMovimentos === 0) {
-    return { insertedCount: 0 };
+    return {
+      insertedCount: 0,
+      logs,
+    };
   }
 
   // 4. Insertar movimientos con id_royalty_cab
   await movtoRepo.insertMany(itensParaInserir);
 
-  return { insertedCount: totalMovimentos };
+  return {
+    insertedCount: totalMovimentos,
+    logs,
+  };
 }
 
 export const apurarRoyaltiesController = {};

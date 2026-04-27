@@ -46,14 +46,11 @@ async function task() {
 }
 
 async function init() {
-  //excluir collection product  (renomeado para tmp_produto)
-
   //await produtoController.init(); //mongodb
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
   //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
-
   //await apuracaoRoyaltiesCabController.init();
   //console.log("Fim processsamento inicial. Iniciando agenda...");
   //return;
