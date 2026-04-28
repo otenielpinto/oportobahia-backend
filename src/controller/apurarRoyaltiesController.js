@@ -272,7 +272,7 @@ export async function _processarCab(cab) {
 
       percentual =
         valorSemImpostos > 0
-          ? lib.round((valorSemImpostos / copyrightNormal) * 100, 2)
+          ? lib.round((copyrightNormal / valorSemImpostos) * 100, 2)
           : 0;
 
       itensParaInserir.push({
