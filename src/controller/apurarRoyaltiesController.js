@@ -7,8 +7,10 @@ import { EmpresaRepository } from "../repository/empresaRepository.js";
 import { TributacaoRepository } from "../repository/tributacaoRepository.js";
 import { ListaPrecoExcecoesRepository } from "../repository/listaPrecoExcecoesRepository.js";
 import { CalculoImpostoService } from "../services/calculoImpostoService.js";
+import { FormatoRepository } from "../repository/formatoRepository.js";
 
-const TAXA_ROYALTIES = 9.0; // Exemplo de taxa de royalties (15%)
+const TAXA_CUSTO_OPERATIVO = 9.0;
+const TAXA_REDUTOR_ROYALTIES = 0.9;
 
 //Obs : Decidi criar a function aqui e estou consciente
 async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
@@ -37,6 +39,8 @@ export async function _processarCab(cab) {
 
   const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
   const tributacaoRepo = new TributacaoRepository(id_tenant);
+
+  //precisa refatorar para nao precisar enviar tributacaoRepo
   const impostoService = new CalculoImpostoService(tributacaoRepo);
 
   // Fetch empresa data for uf_origem field
@@ -62,6 +66,15 @@ export async function _processarCab(cab) {
   const produtos = await produtoRepo.findAll();
   const produtoMap = new Map(
     produtos.map((p) => [p.gtin, { id: p.id, codigo: p.codigo, gtin: p.gtin }]),
+  );
+
+  const formatoRepo = new FormatoRepository(id_tenant);
+  const formatos = await formatoRepo.findAll();
+  const formatoMap = new Map(
+    formatos.map((f) => [
+      f.name,
+      { limite_faixas: f.limite_faixas, percentual_faixa: f.percentual_faixa },
+    ]),
   );
 
   // Repository para buscar preços de lista
@@ -170,11 +183,33 @@ export async function _processarCab(cab) {
       let totalImpostos = 0;
       let baseCalculo = 0;
       let custoOperativo = 0;
-      let percentualCustoOperativo = TAXA_ROYALTIES;
+      let percentualCustoOperativo = TAXA_CUSTO_OPERATIVO;
       let tipo = produtoRoyalty.tipo || "";
+      let baseCalculoLista = 0;
+      let numDiscos = produtoRoyalty.numeroDiscos || 1;
+      let numFaixas = produtoRoyalty.numeroFaixas || 0;
+      let quantFaturada = parseFloat(item.prod.qCom) || 0;
+      let copyrightNormal = 0.0;
+      let percentual = 0;
+
+      const formato = formatoMap.get(tipo);
+      if (!formato) {
+        logs.push(
+          gerarLog(
+            "FORMATO_NOT_FOUND",
+            gtin,
+            descricaoProduto,
+            `${numeroNota}-${serieNota} | Tipo: ${tipo}`,
+          ),
+        );
+        continue;
+      }
 
       if (valor_produto > 0) {
-        custoOperativo = lib.round((valor_produto * TAXA_ROYALTIES) / 100, 2);
+        custoOperativo = lib.round(
+          (valor_produto * percentualCustoOperativo) / 100,
+          2,
+        );
       }
 
       if (tributacao) {
@@ -218,6 +253,28 @@ export async function _processarCab(cab) {
         );
       }
 
+      baseCalculoLista = lib.round(
+        ((valorUnitLista * TAXA_REDUTOR_ROYALTIES) / numDiscos) * quantFaturada,
+        2,
+      );
+
+      let limite_aux = numFaixas;
+      if (formato.limite_faixas >= numFaixas) {
+        limite_aux = formato.limite_faixas;
+      } else {
+        limite_aux = numFaixas;
+      }
+
+      copyrightNormal = lib.round(
+        (baseCalculoLista * (formato.percentual_faixa * limite_aux)) / 100,
+        2,
+      );
+
+      percentual =
+        valorSemImpostos > 0
+          ? lib.round((valorSemImpostos / copyrightNormal) * 100, 2)
+          : 0;
+
       itensParaInserir.push({
         // FK hacia cabecera
         id_royalty_cab: id,
@@ -246,7 +303,7 @@ export async function _processarCab(cab) {
         itemCfop: item.prod.CFOP || "",
         barraCode: item.prod.cEAN || "",
         itemDescricao: item.prod.xProd || "",
-        quantFaturada: parseFloat(item.prod.qCom) || 0,
+        quantFaturada: quantFaturada,
         valorUnitMercadoria: parseFloat(item.prod.vUnCom) || 0,
         valorMercadoria: parseFloat(item.prod.vProd) || 0,
         desconto: parseFloat(item.prod.vDesc) || 0,
@@ -266,8 +323,8 @@ export async function _processarCab(cab) {
         nivelRoyalties: produtoRoyalty.nivelRoyalty || "",
         percentualRoyalties: percentualRoyalties,
         tipo: tipo || "",
-        numDiscos: produtoRoyalty.numeroDiscos || 0,
-        numFaixas: produtoRoyalty.numeroFaixas || 0,
+        numDiscos: numDiscos || 0,
+        numFaixas: numFaixas || 0,
         sku: produtoRoyalty.sku || "",
         fornecedor: produtoRoyalty.fornecedor || "",
         gravadora: produtoRoyalty.gravadora || "",
@@ -283,14 +340,13 @@ export async function _processarCab(cab) {
         percentualPis: percentualPis,
         percentualIpi: percentualIpi,
         valorSemImpostos: valorSemImpostos,
-        percentualCusto: 0,
         baseCalculoRoyalties: baseCalculoRoyalties,
         valorRoyalties: valorRoyalties,
-        percentualFaixas: 0,
-        limite: 0,
-        baseCalculo: baseCalculo,
-        copyrightNormal: 0,
-        percentual: 0,
+        percentualFaixa: formato.percentual_faixa,
+        limiteFaixas: formato.limite_faixas,
+        baseCalculoLista: baseCalculoLista,
+        copyrightNormal: copyrightNormal || 0,
+        percentual: percentual || 0,
       });
     }
   }
