@@ -63,7 +63,7 @@ export async function _processarCab(cab) {
   }
 
   const produtoRepo = new ProdutoRepository(id_tenant);
-  const produtos = await produtoRepo.findAll();
+  const produtos = await produtoRepo.findAll({ situacao: "A" });
   const produtoMap = new Map(
     produtos.map((p) => [p.gtin, { id: p.id, codigo: p.codigo, gtin: p.gtin }]),
   );
@@ -100,34 +100,31 @@ export async function _processarCab(cab) {
       const numeroNota = nf.numero || "";
       const serieNota = nf.serie || "";
 
-      // Buscar produto em tmp_produto (produtoMap) - obtiene ID
-      const produto = produtoMap.get(gtin);
-      if (!produto) {
-        logs.push(
-          gerarLog(
-            "PRODUTO_NOT_FOUND",
-            gtin,
-            descricaoProduto,
-            `${numeroNota}-${serieNota}`,
-          ),
-        );
-        continue;
-      }
-
       // Buscar dados em tmp_produto_royalty - obtiene listaPreco
       const produtoRoyalty = await produtoRoyaltyRepo.findOne({
         gtinEan: gtin,
       });
       if (!produtoRoyalty) {
-        logs.push(
-          gerarLog(
-            "ROYALTY_NOT_FOUND",
-            gtin,
-            descricaoProduto,
-            `${numeroNota}-${serieNota}`,
-          ),
-        );
+        console.log("Produto nao paga royalties, pulando item. GTIN:", gtin);
         continue;
+      }
+
+      // Buscar produto em tmp_produto (produtoMap) - obtiene ID
+      let produto = produtoMap.get(gtin);
+      if (!produto) {
+        //segunda tentativa de encontrar pelo gtin pode ser que estava inativo
+        produto = await produtoRepo.findOne({ gtin: gtin });
+        if (!produto) {
+          logs.push(
+            gerarLog(
+              "PRODUTO_NOT_FOUND",
+              gtin,
+              descricaoProduto,
+              `${numeroNota}-${serieNota} | GTIN: ${gtin}`,
+            ),
+          );
+          continue;
+        }
       }
 
       // Buscar preço de lista em ListaPrecoExcecoes
@@ -184,7 +181,7 @@ export async function _processarCab(cab) {
       let baseCalculo = 0;
       let custoOperativo = 0;
       let percentualCustoOperativo = TAXA_CUSTO_OPERATIVO;
-      let tipo = produtoRoyalty.tipo || "";
+      const tipo = String(produtoRoyalty?.tipo ?? "").toUpperCase();
       let baseCalculoLista = 0;
       let numDiscos = produtoRoyalty.numeroDiscos || 1;
       let numFaixas = produtoRoyalty.numeroFaixas || 0;
