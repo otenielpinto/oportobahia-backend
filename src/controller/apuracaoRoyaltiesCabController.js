@@ -14,10 +14,16 @@ async function processarFila() {
 
     try {
       await cabRepo.marcarProcesando(cab.id);
-      const { insertedCount } = await _processarCab(cab);
-      await cabRepo.marcarCompletada(cab.id, insertedCount);
+      const { insertedCount, logs } = await _processarCab(cab);
+      await cabRepo.marcarCompletada(cab.id, insertedCount, logs);
     } catch (error) {
-      await cabRepo.marcarErro(cab.id, error.message);
+      const erroMessage = error?.message || String(error) || "Erro desconhecido";
+      console.error(`[processarFila] Erro ao processar cab ${cab.id}:`, error);
+      try {
+        await cabRepo.marcarErro(cab.id, erroMessage);
+      } catch (dbError) {
+        console.error(`[processarFila] Falha ao marcar erro para cab ${cab.id}:`, dbError);
+      }
     }
   }
 }

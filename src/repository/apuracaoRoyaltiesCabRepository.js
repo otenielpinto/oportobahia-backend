@@ -39,8 +39,8 @@ class ApuracaoRoyaltiesCabRepository extends Repository {
   /**
    * Marca como completada con total de movimientos
    */
-  async marcarCompletada(id, totalMovimentos) {
-    return this.atualizarStatus(id, "completada", { totalMovimentos });
+  async marcarCompletada(id, totalMovimentos, logs = []) {
+    return this.atualizarStatus(id, "completada", { totalMovimentos, logs });
   }
 
   /**
