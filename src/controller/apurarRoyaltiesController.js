@@ -35,7 +35,8 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
 }
 
 export async function _processarCab(cab) {
-  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant } = cab;
+  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant, id_empresa } =
+    cab;
 
   const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
   const tributacaoRepo = new TributacaoRepository(id_tenant);
@@ -282,6 +283,7 @@ export async function _processarCab(cab) {
         dataFinal: dataFinal,
         cotacaoDollar: cotacaoDollar,
         id_tenant: id_tenant,
+        id_empresa: id_empresa,
         uf_origem: uf_origem,
         createdAt: new Date(),
         data_movto: nf.data_movto || null,

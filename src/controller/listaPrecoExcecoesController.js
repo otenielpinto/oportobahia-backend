@@ -21,7 +21,9 @@ async function importarListaPreco(tenant) {
   let listaRepository = new ListaPrecoRepository();
   let listaPreco = await listaRepository.findAll({ id_tenant: tenant.id });
 
-  const listaPrecoExcecoesRepository = new ListaPrecoExcecoesRepository(tenant.id);
+  const listaPrecoExcecoesRepository = new ListaPrecoExcecoesRepository(
+    tenant.id,
+  );
 
   let tiny = new Tiny({ token: tenant.tiny_token, timeout: 1000 * 12 });
   let info = new TinyInfo({ instance: tiny });
