@@ -35,7 +35,7 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
 }
 
 export async function _processarCab(cab) {
-  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant, id_empresa } =
+  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant, id_empresa, gravadora } =
     cab;
 
   const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
@@ -107,6 +107,11 @@ export async function _processarCab(cab) {
       });
       if (!produtoRoyalty) {
         console.log("Produto nao paga royalties, pulando item. GTIN:", gtin);
+        continue;
+      }
+
+      // Filtrar por gravadora quando um selo específico foi selecionado
+      if (gravadora && gravadora !== "TODOS" && produtoRoyalty.gravadora !== gravadora) {
         continue;
       }
 

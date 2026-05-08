@@ -96,7 +96,7 @@ async function processAuxiliaryCollections(db, sourceDocuments, config) {
         for (const value of distinctValues) {
           await db.collection(collectionName).updateOne(
             {
-              value: value,
+              nome: value,
               id_tenant: config.id_tenant,
               id_empresa: config.id_empresa,
             },
@@ -104,7 +104,7 @@ async function processAuxiliaryCollections(db, sourceDocuments, config) {
               $set: {
                 id_tenant: config.id_tenant,
                 id_empresa: config.id_empresa,
-                value: value,
+                nome: value,
                 updated_at: new Date(),
               },
               $setOnInsert: {
