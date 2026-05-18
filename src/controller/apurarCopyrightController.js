@@ -76,7 +76,7 @@ async function processarApuracao(payload) {
 
           //preciso identificar o id do produto
           let produto = await clientdb
-            .collection("product")
+            .collection("tmp_produto")
             .findOne({ gtin: barcode });
 
           if (!produto) {

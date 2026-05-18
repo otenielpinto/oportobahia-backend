@@ -50,8 +50,10 @@ async function init() {
   //await nfeController.init();
   //await listaPrecoController.init();
   //await listaPrecoExcecoesController.init();
+
   //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
   //await apuracaoRoyaltiesCabController.init();
+  //await apurarCopyrightController.init();
   //console.log("Fim processsamento inicial. Iniciando agenda...");
   //return;
 
