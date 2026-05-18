@@ -57,15 +57,19 @@ async function importarNotaFiscais(tenant) {
 
       if (nfe?.id) {
         console.log(`Nota Fiscal ${nota_fiscal.id} já importada`);
+        let linhaApi = montarLinhaNotaFiscal(nota_fiscal);
+        let linhaBanco = montarLinhaNotaFiscal(nfe);
 
-        // Verificar se a situação ATUAL (da API) está invalidada
-        if (isNotaFiscalInvalidada(situacao)) {
+        // Se valor+situacao mudaram entre API e banco, remove para reimportar.
+        if (linhaBanco !== linhaApi) {
           await nfeRepository.delete(nota_fiscal.id);
           console.log(
-            `Nota Fiscal ${nota_fiscal.id} excluida do sistema sit:${situacao}`,
+            `Nota Fiscal ${nota_fiscal.id} excluida para reimportacao: ${linhaBanco} -> ${linhaApi}`,
           );
+        } else {
+          // Se já existe e a composição é a mesma, não reimportar.
+          continue;
         }
-        continue;
       }
 
       // Não importar se a nota fiscal está invalidada (vinda da API)
@@ -140,6 +144,20 @@ async function importarXml(tenant) {
 function isNotaFiscalInvalidada(situacao) {
   const situacoesInvalidas = ["Denegada", "Cancelada", "Rejeitada"];
   return situacoesInvalidas.includes(situacao);
+}
+
+function obterSituacaoNotaFiscal(nfe = {}) {
+  return nfe?.descricao_situacao || nfe?.situacao || "";
+}
+
+function obterValorNotaFiscal(nfe = {}) {
+  return nfe?.valor_nota || nfe?.valor || nfe?.total || nfe?.valor_total || "";
+}
+
+function montarLinhaNotaFiscal(nfe = {}) {
+  const situacao = obterSituacaoNotaFiscal(nfe);
+  const valor = String(obterValorNotaFiscal(nfe) ?? "").trim();
+  return `${valor}|${situacao}`;
 }
 
 async function obterTipoVenda(items = []) {
