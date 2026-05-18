@@ -54,7 +54,7 @@ async function init() {
   //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
   //await apuracaoRoyaltiesCabController.init();
   //await apurarCopyrightController.init();
-  //console.log("Fim processsamento inicial. Iniciando agenda...");
+  //console.log("Fim processsamento inicial");
   //return;
 
   try {
