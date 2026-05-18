@@ -80,7 +80,7 @@ async function importarNotaFiscais(tenant) {
         `Importando nfe  ${nota_fiscal.id} - ${nota_fiscal.numero} - ${nota_fiscal.data_emissao}`,
       );
 
-      let obj = { ...nota_fiscal, id_tenant: tenant.id };
+      let obj = { ...nota_fiscal, id_tenant: tenant.id, id_empresa: tenant.id };
       await nfeRepository.update(obj.id, obj);
     }
   }
