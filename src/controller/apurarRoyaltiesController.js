@@ -16,10 +16,24 @@ const TAXA_REDUTOR_ROYALTIES = 0.9;
 async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   try {
     const clientdb = await TMongo.connect();
+
+    const dataInicial = new Date(fromDate);
+    const dataFinal = new Date(toDate);
+
+    if (
+      Number.isNaN(dataInicial.getTime()) ||
+      Number.isNaN(dataFinal.getTime())
+    ) {
+      throw new Error("Datas invalidas para busca de notas fiscais");
+    }
+
+    dataInicial.setHours(3, 0, 0, 0);
+    dataFinal.setHours(23, 59, 59, 0);
+
     const query = {
       data_movto: {
-        $gte: fromDate,
-        $lte: toDate,
+        $gte: dataInicial,
+        $lte: dataFinal,
       },
       tipoVenda: tipoVenda,
     };
@@ -35,8 +49,15 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
 }
 
 export async function _processarCab(cab) {
-  const { id, dataInicial, dataFinal, cotacaoDollar, id_tenant, id_empresa, gravadora } =
-    cab;
+  const {
+    id,
+    dataInicial,
+    dataFinal,
+    cotacaoDollar,
+    id_tenant,
+    id_empresa,
+    gravadora,
+  } = cab;
 
   const movtoRepo = new ApuracaoRoyaltiesMovtoRepository(id_tenant);
   const tributacaoRepo = new TributacaoRepository(id_tenant);
@@ -111,7 +132,11 @@ export async function _processarCab(cab) {
       }
 
       // Filtrar por gravadora quando um selo específico foi selecionado
-      if (gravadora && gravadora !== "TODOS" && produtoRoyalty.gravadora !== gravadora) {
+      if (
+        gravadora &&
+        gravadora !== "TODOS" &&
+        produtoRoyalty.gravadora !== gravadora
+      ) {
         continue;
       }
 
