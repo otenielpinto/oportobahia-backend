@@ -17,6 +17,8 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
   try {
     const clientdb = await TMongo.connect();
 
+    // Usar direto os valores que já são Date (não converter novamente)
+    // Criar cópia para não mutar os originais
     const dataInicial = new Date(fromDate);
     const dataFinal = new Date(toDate);
 
@@ -27,8 +29,10 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
       throw new Error("Datas invalidas para busca de notas fiscais");
     }
 
-    dataInicial.setHours(3, 0, 0, 0);
-    dataFinal.setHours(23, 59, 59, 0);
+    // Usar setUTCHours para trabalhar em UTC (MongoDB armazena tudo em UTC)
+    // Assim o 30/04 fica 30/04 00:00:00 UTC até 30/04 23:59:59 UTC
+    dataInicial.setUTCHours(0, 0, 0, 0);
+    dataFinal.setUTCHours(23, 59, 59, 999);
 
     const query = {
       data_movto: {
@@ -38,7 +42,6 @@ async function getNotasFiscaisPorPeriodo({ fromDate, toDate, tipoVenda }) {
       tipoVenda: tipoVenda,
     };
     const data = await clientdb.collection("nota_fiscal").find(query).toArray();
-
     return data;
   } catch (error) {
     console.error("Erro ao recuperar notas fiscais:", error);
