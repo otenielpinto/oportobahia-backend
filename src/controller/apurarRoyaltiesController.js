@@ -9,7 +9,6 @@ import { ListaPrecoExcecoesRepository } from "../repository/listaPrecoExcecoesRe
 import { CalculoImpostoService } from "../services/calculoImpostoService.js";
 import { FormatoRepository } from "../repository/formatoRepository.js";
 
-const TAXA_CUSTO_OPERATIVO = 9.0;
 const TAXA_REDUTOR_ROYALTIES = 0.9;
 
 //Obs : Decidi criar a function aqui e estou consciente
@@ -214,7 +213,10 @@ export async function _processarCab(cab) {
       let totalImpostos = 0;
       let baseCalculo = 0;
       let custoOperativo = 0;
-      let percentualCustoOperativo = TAXA_CUSTO_OPERATIVO;
+      let percentualCustoOperativo = parseFloat(
+        produtoRoyalty?.custo_operativo ?? 0,
+      );
+
       const tipo = String(produtoRoyalty?.tipo ?? "").toUpperCase();
       let baseCalculoLista = 0;
       let numDiscos = produtoRoyalty.numeroDiscos || 1;
@@ -236,7 +238,7 @@ export async function _processarCab(cab) {
         continue;
       }
 
-      if (valor_produto > 0) {
+      if (valor_produto > 0 && percentualCustoOperativo > 0) {
         custoOperativo = lib.round(
           (valor_produto * percentualCustoOperativo) / 100,
           2,
@@ -347,8 +349,8 @@ export async function _processarCab(cab) {
         ipi: valorIpi,
 
         // From produto royalty
-        catalogo: produtoRoyalty.descricaoTitulo || "",
-        serieAlbum: produtoRoyalty.marca || "",
+        catalogo: produtoRoyalty.sku || "",
+        serieAlbum: produtoRoyalty.listaPreco || "",
         valorUnitLista: valorUnitLista,
         custoOperativo: custoOperativo || 0,
         percentualCustoOperativo: percentualCustoOperativo || 0,
