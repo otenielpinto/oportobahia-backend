@@ -16,6 +16,7 @@ const AUXILIARY_COLLECTIONS = [
   "tmp_royalty_tipo",
   "tmp_royalty_gravadora",
   "tmp_royalty_fornecedor",
+  "tmp_royalty_parceiro",
 ];
 
 // Batch size fixo
@@ -32,7 +33,6 @@ function mapDocument(source, config) {
     sku: source.sku ?? null,
     gtinEan: source.gtinEan ?? null,
     descricaoTitulo: source.descricaoTitulo ?? null,
-    release: source.release ? new Date(source.release) : null,
     listaPreco: source.listaPreco ?? null,
     precoOporto: source.precoOporto ?? null,
     precoDistribuidora: source.precoDistribuidora ?? null,
@@ -48,6 +48,10 @@ function mapDocument(source, config) {
     numeroDiscos: source.numeroDiscos ?? null,
     numeroFaixas: source.numeroFaixas ?? null,
     gravadora: source.gravadora ?? null,
+    parceiro: source.parceiro ?? null,
+    custo_operativo: source.custo_operativo ?? null,
+    royalty_min_garantido_dolar: source.royalty_min_garantido_dolar ?? null,
+    royalty_min_garantido_real: source.royalty_min_garantido_real ?? null,
     peso: source.peso ?? null,
     importadoEm: source.importadoEm ?? null,
     loteImportacao: source.loteImportacao ?? null,
@@ -76,6 +80,7 @@ async function processAuxiliaryCollections(db, sourceDocuments, config) {
     tmp_royalty_tipo: "tipo",
     tmp_royalty_gravadora: "gravadora",
     tmp_royalty_fornecedor: "fornecedor",
+    tmp_royalty_parceiro: "parceiro",
   };
 
   for (const [collectionName, fieldName] of Object.entries(collectionFields)) {
