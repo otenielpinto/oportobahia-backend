@@ -58,7 +58,7 @@ async function init() {
   //return;
 
   try {
-    const time = 8; //tempo em minutos
+    const time = 10; //tempo em minutos
     const job = nodeSchedule.scheduleJob(`*/${time} * * * *`, async () => {
       console.log(" Job start as " + lib.currentDateTimeStr());
       await TMongo.close();
