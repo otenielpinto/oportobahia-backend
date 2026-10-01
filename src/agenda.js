@@ -19,7 +19,7 @@ global.processandoNow = 0;
 
 async function task() {
   if ((await lib.isManutencao()) == 1) {
-    console.log("Esta em horario de manutenção até ( 20 hrs até 6:00 hrs");
+    console.log("Esta em horario de manutenção até ( 22 hrs até 3:00 hrs");
     return;
   }
 
@@ -54,11 +54,12 @@ async function init() {
   //await produtoRoyaltyController.init(); // Migracao de royalties - ativar quando necessario
   //await apuracaoRoyaltiesCabController.init();
   //await apurarCopyrightController.init();
+  //await task();
   //console.log("Fim processsamento inicial");
   //return;
 
   try {
-    const time = 10; //tempo em minutos
+    const time = 6; //tempo em minutos
     const job = nodeSchedule.scheduleJob(`*/${time} * * * *`, async () => {
       console.log(" Job start as " + lib.currentDateTimeStr());
       await TMongo.close();

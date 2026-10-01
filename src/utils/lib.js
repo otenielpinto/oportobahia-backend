@@ -263,7 +263,7 @@ function currentDateTimeStr() {
 async function isManutencao() {
   let hora = new Date().getHours();
   let res = 0;
-  if (hora >= 20 || hora <= 6) res = 1;
+  if (hora >= 22 || hora <= 3) res = 1;
   return res;
 }
 
