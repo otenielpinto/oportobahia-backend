@@ -79,7 +79,7 @@ export async function _processarCab(cab) {
   const notasFiscais = await getNotasFiscaisPorPeriodo({
     fromDate: dataInicial,
     toDate: dataFinal,
-    tipoVenda: "V",
+    tipoVenda: { $in: ["V", "B"] },
   });
 
   if (!notasFiscais || notasFiscais.length === 0) {
@@ -324,6 +324,7 @@ export async function _processarCab(cab) {
         data_movto: nf.data_movto || null,
 
         // NF fields
+        tipoVenda: nf.tipoVenda,
         clienteCpfCnpj: nf.cliente?.cpf_cnpj || "",
         clienteNome: nf.cliente?.nome || nf.nome || "",
         clienteMunicipio: nf.cliente?.cidade || "",
