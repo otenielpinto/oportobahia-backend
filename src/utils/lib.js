@@ -1,9 +1,11 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 const lista_cfop_venda = [
-  5102, 5104, 5106, 5108, 5110, 6102, 5403, 5405, 6403, 6404, 6106, 6108, 6104,
+  5102, 5104, 5106, 5108, 5110, 5403, 5405, 6102, 6403, 6404, 6106, 6108, 6104,
   6110,
 ];
+
+const lista_cfop_bonificacao = [5910, 6910, 5911, 6911];
 
 function objectToLowerCase(records) {
   const results = [];
@@ -102,16 +104,7 @@ function stringOfChar(char, length) {
 }
 
 function newUUId() {
-  return uuidv4();
-}
-
-async function isCfopVenda(cfop) {
-  let cfop_num = Number(cfop);
-  let res = false;
-  if (lista_cfop_venda.includes(cfop_num)) {
-    res = true;
-  }
-  return res;
+  return randomUUID();
 }
 
 async function extrairXmlNotaFiscal(obj) {
@@ -268,27 +261,18 @@ async function isManutencao() {
 }
 
 function isCFOPVenda(cfop) {
-  let cfops = [
-    "5102",
-    "5104",
-    "5106",
-    "5108",
-    "5110",
-    "5403",
-    "5405",
-    "5403",
-    "5405",
-    "6102",
-    "6403",
-    "6404",
-    "6106",
-    "6108",
-    "6104",
-    "6110",
-  ];
-
   let result = false;
-  if (cfops.includes(cfop)) {
+  let cfop_num = Number(cfop);
+  if (lista_cfop_venda.includes(cfop_num)) {
+    result = true;
+  }
+  return result;
+}
+
+async function isCFOPBonificacao(cfop) {
+  let result = false;
+  let cfop_num = Number(cfop);
+  if (lista_cfop_bonificacao.includes(cfop_num)) {
     result = true;
   }
   return result;
@@ -310,7 +294,7 @@ export const lib = {
   stringOfChar,
 
   newUUId,
-  isCfopVenda,
+  isCFOPBonificacao,
 
   extrairXmlNotaFiscal,
   toJSONObject,

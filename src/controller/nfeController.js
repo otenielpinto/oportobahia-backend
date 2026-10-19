@@ -163,12 +163,23 @@ function montarLinhaNotaFiscal(nfe = {}) {
 async function obterTipoVenda(items = []) {
   let result = "D";
   if (!Array.isArray(items)) return result;
+
+  //venda
   for (let item of items) {
     let cfop = item?.prod?.CFOP;
     if (lib.isCFOPVenda(cfop)) {
       return "V";
     }
   }
+
+  //bonificacao
+  for (let item of items) {
+    let cfop = item?.prod?.CFOP;
+    if (lib.isCFOPBonificacao(cfop)) {
+      return "B";
+    }
+  }
+
   return result;
 }
 
