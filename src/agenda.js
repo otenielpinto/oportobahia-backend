@@ -2,7 +2,6 @@ import { TMongo } from "./infra/mongoClient.js";
 import { lib } from "./utils/lib.js";
 import nodeSchedule from "node-schedule";
 
-import { notaFiscalRepository } from "./repository/notafiscalRepository.js";
 import { produtoController } from "./controller/produtoController.js";
 import { serviceRepository } from "./repository/serviceRepository.js";
 import { listaPrecoController } from "./controller/listaPrecoController.js";

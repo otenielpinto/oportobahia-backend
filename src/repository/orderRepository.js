@@ -4,7 +4,7 @@ import { xmlParser } from "../utils/xmlParser.js";
 
 import { tenantRepository } from "./tenantRepository.js";
 import { tinyRepository } from "./tinyRepository.js";
-import { notaFiscalRepository } from "./notafiscalRepository.js";
+
 import { ecommerceRepository } from "./ecommerceRepository.js";
 
 import { Tiny } from "../services/tinyService.js";
@@ -15,24 +15,6 @@ async function init() {
     await receberPedidos();
   } catch (error) {}
   await receberNfe();
-}
-
-async function ajustarOrderNotaFiscal(diaInicial, prefixo) {
-  let nfs = await notaFiscalRepository.notasFiscaisPorPeriodo(
-    diaInicial,
-    prefixo,
-  );
-
-  for (let nf of nfs) {
-    console.log(
-      `Excluindo nf: ${nf.data_emissao} ` +
-        nf.id +
-        " order id = " +
-        nf.order.id,
-    );
-    await notaFiscalRepository.excluirNotaFiscalOne(nf.id);
-    await setStatusOpen(nf.id_tenant, nf.order.id);
-  }
 }
 
 async function getAllOrder(params = {}) {
@@ -169,13 +151,7 @@ async function enviarXml(id_tenant, id_nota_fiscal, order, nota_fiscal, xml) {
   xmlParser.parser.parseString(xml, async function (err, result) {
     if (err) console.log(err);
     let docXml = await lib.extrairXmlNotaFiscal(result);
-    let statusCode = await notaFiscalRepository.saveNfeXml(
-      id_tenant,
-      id_nota_fiscal,
-      order,
-      docXml,
-      nota_fiscal,
-    );
+    //salvar no mongodb o xml  foi removida essa opcao aqui
 
     if (statusCode == 200) {
       await setStatusNfe(id_tenant, order.id);
